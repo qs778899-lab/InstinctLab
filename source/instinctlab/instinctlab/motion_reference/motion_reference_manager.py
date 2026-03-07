@@ -231,6 +231,13 @@ class MotionReferenceManager(SensorBase):
     @property
     def frame_interval_s(self) -> torch.Tensor:
         """Shape: (num_envs,)"""
+
+        #修改
+        if not hasattr(self, "_frame_interval_s"):
+            # _frame_interval_s is initialized in _resample_buffer_collate_params,
+            # which is called during _initialize_impl. Return a scalar fallback before that.
+            return self.cfg.frame_interval_s
+
         return self._frame_interval_s
 
     @property

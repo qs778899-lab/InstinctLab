@@ -44,6 +44,7 @@ from instinctlab.motion_reference.motion_files.amass_motion_cfg import AmassMoti
 from instinctlab.motion_reference.utils import motion_interpolate_bilinear
 from instinctlab.utils.humanoid_ik import HumanoidSmplRotationalIK
 
+
 combine_method = "prod"
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
@@ -184,7 +185,8 @@ class AmassMotionCfg(AmassMotionCfgBase):
     # path = os.path.expanduser("~/Datasets/AMASS_SMPLX-NG_GMR_29dof_g1_torsoBase_retargetted_20250901_instinctnpz")
     # path = _path_
     path = os.path.expanduser("~/Datasets/NoKov-Marslab-Motions-instinctnpz/20251016_diveroll4_single")
-    retargetting_func = None
+    retargetting_func = HumanoidSmplRotationalIK #修改
+    retargetting_func_kwargs = {"robot_chain": G1_CFG.spawn.asset_path} #修改
     filtered_motion_selection_filepath = None
     motion_start_from_middle_range = [0.0, 0.8]
     motion_start_height_offset = 0.0
