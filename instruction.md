@@ -19,6 +19,12 @@
 ## 训练示例1 (动作模仿)
 
     conda activate isaac && cd InstinctLab
+
+    # 可视化retargeting数据
+    python scripts/amass_visualize.py
+
+
+    # 训练
     python scripts/instinct_rl/train.py --task=Instinct-Shadowing-WholeBody-Plane-G1-Play-v0 --headless
     tensorboard --logdir logs/instinct_rl/g1_shadowing
     # 恢复训练，自动加载最新的 checkpoint
@@ -28,7 +34,7 @@
     python scripts/instinct_rl/train.py --task=Instinct-Shadowing-WholeBody-Plane-G1-Play-v0 --headless --resume --load_run 20260307_190718 --checkpoint model_2000.pt
 
     可视化：带坐标系的是参考机器人
-
+    # 推理
     python scripts/instinct_rl/play.py --task=Instinct-Shadowing-WholeBody-Plane-G1-Play-v0 --load_run 20260307_190718
 
 
