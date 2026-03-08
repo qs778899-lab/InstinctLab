@@ -522,6 +522,12 @@ class MotionReferenceManager(SensorBase):
         self._resample_update_period()
         print(self)  # print the tabular information of the motion reference managed buffer.
 
+    def update(self, dt: float, force_recompute: bool = False):
+        """Update the motion reference manager."""
+        # Apply play_speed to the time delta
+        scaled_dt = dt * getattr(self.cfg, "play_speed", 1.0)
+        super().update(scaled_dt, force_recompute=force_recompute)
+
     def _update_buffers_impl(self, env_ids: Sequence[int] | torch.Tensor):
         """Update the motion reference buffers for the given env_ids."""
         env_ids = torch.as_tensor(env_ids, device=self.device)
@@ -539,9 +545,10 @@ class MotionReferenceManager(SensorBase):
                 env_ids >= env_ids_assignment.start, env_ids < env_ids_assignment.stop
             )
             env_ids_this_buffer = env_ids[env_ids_this_buffer_mask]
+
             buffer.fill_motion_data(
                 env_ids_this_buffer,
-                self._timestamp[env_ids_this_buffer].unsqueeze(-1) + time_to_target_frame[env_ids_this_buffer_mask],
+                self._timestamp[env_ids_this_buffer].unsqueeze(-1) + time_to_target_frame[env_ids_this_buffer_mask] , 
                 self.env_origins,
                 self._data,
             )

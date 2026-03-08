@@ -380,6 +380,7 @@ class G1PlaneShadowingEnvCfg_PLAY(G1PlaneShadowingEnvCfg):
         robot_reference=G1_CFG.replace(prim_path="{ENV_REGEX_NS}/RobotReference"),
         motion_reference=motion_reference_cfg.replace(
             debug_vis=True,
+            play_speed=0.5,
             # motion_buffers={
             # "amass": AmassMotionCfg(
             #     path=os.path.expanduser("~/Datasets/AMASS_CMU_KIT_ACCAD_DanceDB_HumanEva_retargetted_20250702"),  # type: ignore

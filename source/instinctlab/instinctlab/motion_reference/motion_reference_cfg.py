@@ -148,6 +148,9 @@ class MotionReferenceManagerCfg(SensorBaseCfg):
     - 'reference_frame': get the reference state directly from motion_reference.reference_frame
     """
 
+    play_speed: float = 1.0 #修改
+    """ The playback speed of the motion reference. 1.0 is normal speed. """
+
 
 @configclass
 class NoCollisionPropertiesCfg(schemas.CollisionPropertiesCfg):
