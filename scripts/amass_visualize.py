@@ -1,13 +1,17 @@
 import argparse
+import os
 
 from isaaclab.app import AppLauncher
 
 # add argparse arguments
 parser = argparse.ArgumentParser(description="This script demonstrates different legged robots.")
 parser.add_argument("--num_envs", type=int, default=4, help="Number of environments to spawn.")
+parser.add_argument("--motion_path", type=str, default=os.path.expanduser("~/Datasets/AMASS/"), help="Path to the motion dataset.")
 parser.add_argument("--debug", action="store_true", default=False, help="Enable debug mode.")
 parser.add_argument("--live_plot", action="store_true", default=False, help="Plot some critical lines alive")
 parser.add_argument("--video", type=str, default=None, help="Path to save the video.")
+parser.add_argument("--print_foot_pos", action="store_true", default=False, help="Print foot positions every N frames.")
+parser.add_argument("--print_interval", type=int, default=50, help="Interval for printing foot positions.")
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -70,7 +74,7 @@ DECIMATION = 4
 @configclass
 class AmassMotionCfg(AmassMotionCfgBase):
     clip_joint_ref_to_robot_limits = True
-    path = os.path.expanduser("~/Datasets/AMASS/")
+    path = args_cli.motion_path
     retargetting_func = HumanoidSmplRotationalIK
     retargetting_func_kwargs = dict(
         robot_chain=G1_29DOF_TORSOBASE_CFG.spawn.asset_path,
@@ -141,11 +145,23 @@ def run_simulator(sim: SimulationContext, scene: InteractiveScene):
         _plotter_counter = 0
 
     # simulation loop
+    _print_counter = 0
     while simulation_app.is_running():
         # Write data to sim
 
         # write robot data based on motion reference
         motion_reference_frame = motion_reference.reference_frame
+        
+        # print foot positions if enabled
+        if args_cli.print_foot_pos and _print_counter % args_cli.print_interval == 0:
+            print(f"--- Step {_print_counter} ---")
+            links = motion_reference.cfg.link_of_interests
+            pos_w = motion_reference_frame.link_pos_w[0, 0] # [num_links, 3]
+            for i, link_name in enumerate(links):
+                if "ankle" in link_name or "foot" in link_name:
+                    print(f"Link: {link_name}, Pos: {pos_w[i].cpu().numpy()}")
+        _print_counter += 1
+
         # robot.root_physx_view.set_dof_positions(
         #     motion_reference_frame.joint_pos[:, 0],
         #     indices=robot._ALL_INDICES,
@@ -235,8 +251,8 @@ def main():
     # Load kit helper
     sim_cfg = sim_utils.SimulationCfg(dt=0.005, device=args_cli.device)
     sim = SimulationContext(sim_cfg)
-    # # Set main camera
-    # sim.set_camera_view([2.5, 0.0, 4.0], [0.0, 0.0, 2.0])
+    # Set main camera to side view (looking at the robot from the side)
+    sim.set_camera_view([3.5, 0, 1.0], [0.0, 0.0, 0.5])
 
     # Design scene
     scene_cfg = SceneCfg(num_envs=args_cli.num_envs, env_spacing=2.0, replicate_physics=False)

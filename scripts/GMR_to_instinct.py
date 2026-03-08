@@ -3,6 +3,7 @@
 import argparse
 import functools
 import multiprocessing as mp
+import joblib
 import numpy as np
 import os
 import pickle as pkl
@@ -14,8 +15,21 @@ import pytorch_kinematics as pk
 
 def load_GMR_src_file(src_file):
     """Load from GMR source file"""
-    with open(src_file, "rb") as f:
-        motion_data = pkl.load(f)
+    # with open(src_file, "rb") as f:
+    #     motion_data = pkl.load(f)
+    motion_data = joblib.load(src_file)
+    # Support two GMR data structures:
+    # 1. Old/Flat: { "dof_pos": (N, 29), "root_pos": (N, 3), ... } (Standard pickle)
+    # 2. New/Nested: { "motion_name": { "dof_pos": (N, 29), ... } } (Joblib serialized)
+    # The following logic automatically unpacks the nested structure if detected.
+    if (
+        isinstance(motion_data, dict)
+        and "dof_pos" not in motion_data
+        and len(motion_data) == 1
+        and isinstance(next(iter(motion_data.values())), dict)
+    ):
+        motion_data = next(iter(motion_data.values()))
+
     joint_names = [
         "left_hip_pitch_joint",
         "left_hip_roll_joint",
@@ -47,6 +61,11 @@ def load_GMR_src_file(src_file):
         "right_wrist_pitch_joint",
         "right_wrist_yaw_joint",
     ]
+    required_keys = ["dof_pos", "root_pos", "root_rot", "fps"]
+    missing_keys = [k for k in required_keys if k not in motion_data]
+    if missing_keys:
+        raise KeyError(f"Missing required keys in {src_file}: {missing_keys}")
+
     joint_pos = motion_data["dof_pos"]  # (N, 29)
     base_pos_w = motion_data["root_pos"]  # (N, 3)
     base_quat_w_ = motion_data["root_rot"]  # (N, 4), xyzw order
@@ -126,7 +145,7 @@ def main():
     )
     parser.add_argument("--src_frame", type=str, default="pelvis")
     parser.add_argument("--tgt_frame", type=str, default="torso_link")
-    parser.add_argument("--num_cpus", default=10)
+    parser.add_argument("--num_cpus", type=int, default=10)
 
     args = parser.parse_args()
 
@@ -150,6 +169,7 @@ def main():
                     )
                 )
 
+    #修改
     with mp.Pool(args.num_cpus) as pool:
         results = list(
             tqdm.tqdm(
@@ -165,6 +185,8 @@ def main():
                 total=len(src_tgt_pairs),
             )
         )
+
+
 
 
 if __name__ == "__main__":
