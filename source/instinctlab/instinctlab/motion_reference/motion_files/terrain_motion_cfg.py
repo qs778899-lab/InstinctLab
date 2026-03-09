@@ -32,6 +32,12 @@ class TerrainMotionCfg(AmassMotionCfg):
     sampling of the origins. This parameter controls the maximum number of origins per motion.
     """
 
+    fix_origin_index: int = -1
+    """If set to a non-negative integer (e.g., 0), always use this fixed index into the available origins instead of sampling randomly.
+    Useful for debugging to eliminate position randomization from terrain origin selection.
+    Set to -1 to disable and sample randomly (default).
+    """
+
     def __post_init__(self) -> None:
         """Post-initialization to ensure the motion matching YAML file is set."""
         assert (

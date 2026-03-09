@@ -48,23 +48,25 @@ except ImportError:
 # ──────────────────────────────────────────────
 # Staircase parameters (from create_step_obj.py)
 # ──────────────────────────────────────────────
-NUM_STEPS = 3
-STEP_DEPTH = 0.5       # Y direction (per step), meters
-STEP_HEIGHT = 0.44     # Z direction (per step), meters
+NUM_STEPS = 4
+STEP_DEPTH = 0.4       # Y direction (per step), meters
+STEP_HEIGHT = 0.155     # Z direction (per step), meters
 STEP_WIDTH_X = 1.59    # X direction (1.73 - 0.14), meters
 
 # Holosoma coordinate: stair bottom face starts at Y=2.0, robot at Y=0
 # After GMR conversion: robot at Y≈+0.2, stair bottom at Y≈+0.2
 # => stair bottom Y offset in terrain-local coords:
-STAIR_START_Y = 0.2    # where the first step begins (terrain-local, +Y side)
+STAIR_START_Y = -0.2    # where the first step begins (terrain-local, +Y side)
+STAIR_CENTER_X = 1.0    # X coordinate (terrain-local) of the staircase center
 
 # Border parameters (flat ground around the staircase)
 BORDER_SIZE = 2.0      # meters of flat ground on each side
 BORDER_THICKNESS = 0.1 # thickness of the bottom border slab
 
-# Terrain tile half-size (must fit within cfg.size/2, typically 4m for 8m tile)
-TERRAIN_HALF_X = 4.0
-TERRAIN_HALF_Y = 4.0
+# Terrain tile half-size (must match FiledTerrainGeneratorCfg size in perceptive_env_cfg.py)
+# PerceptiveShadowingSceneCfg uses size=(9, 12)
+TERRAIN_HALF_X = 4.5
+TERRAIN_HALF_Y = 6.0
 
 
 def create_box_mesh(x_min, x_max, y_min, y_max, z_min, z_max) -> trimesh.Trimesh:
@@ -87,6 +89,7 @@ def generate_staircase_terrain(
     step_height: float = STEP_HEIGHT,
     step_width_x: float = STEP_WIDTH_X,
     stair_start_y: float = STAIR_START_Y,
+    stair_center_x: float = STAIR_CENTER_X,
     border_size: float = BORDER_SIZE,
     border_thickness: float = BORDER_THICKNESS,
 ) -> trimesh.Trimesh:
@@ -97,7 +100,7 @@ def generate_staircase_terrain(
       - Origin (0,0,0) is at the flat ground surface at the terrain center.
       - Robot approaches from +Y side, walks toward -Y, climbing stairs.
       - Stairs extend from Y=stair_start_y toward -Y.
-      - X is centered at 0.
+      - X is centered at stair_center_x.
 
     The mesh includes:
       1. A flat bottom border slab (for border_height detection by InstinctLab).
@@ -122,6 +125,8 @@ def generate_staircase_terrain(
     # ...
     # Each step box also includes the full column below it (so the mesh is solid).
     x_half = step_width_x / 2.0
+    x_min = stair_center_x - x_half
+    x_max = stair_center_x + x_half
 
     for i in range(num_steps):
         y_max = stair_start_y - i * step_depth
@@ -130,7 +135,7 @@ def generate_staircase_terrain(
         z_max = (i + 1) * step_height
 
         step_box = create_box_mesh(
-            x_min=-x_half, x_max=x_half,
+            x_min=x_min, x_max=x_max,
             y_min=y_min, y_max=y_max,
             z_min=z_min, z_max=z_max,
         )
@@ -157,6 +162,8 @@ def main():
     parser.add_argument("--step_width_x", type=float, default=STEP_WIDTH_X)
     parser.add_argument("--stair_start_y", type=float, default=STAIR_START_Y,
                         help="Y coordinate (terrain-local) where the first step begins.")
+    parser.add_argument("--stair_center_x", type=float, default=STAIR_CENTER_X,
+                        help="X coordinate (terrain-local) of the staircase center.")
     parser.add_argument("--output_name", type=str, default="stairs_terrain.stl")
     args = parser.parse_args()
 
@@ -166,6 +173,7 @@ def main():
         step_height=args.step_height,
         step_width_x=args.step_width_x,
         stair_start_y=args.stair_start_y,
+        stair_center_x=args.stair_center_x,
     )
 
     os.makedirs(args.output_dir, exist_ok=True)

@@ -101,7 +101,7 @@ def reset_robot_state_by_reference(
     base_pos_w = motion_ref_init_state.base_pos_w
     base_pos_w = motion_ref_init_state.base_pos_w + torch.tensor(
         position_offset, device=motion_ref_init_state.base_pos_w.device
-    ).unsqueeze(0)
+    ).unsqueeze(0) #随机化扰动
 
     # apply randomizations on the reset states if specified
     if randomize_pose_range:

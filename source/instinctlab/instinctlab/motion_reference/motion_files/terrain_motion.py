@@ -140,11 +140,21 @@ class TerrainMotion(AmassMotion):
             # terrain is not fully initialized, skip safe resampling
             return
         motion_ids = self._assigned_env_motion_selection[assigned_ids]
-        sample_i = (
-            (torch.rand(len(assigned_ids)).to(self.output_device) * self._all_motion_num_selectable_origins[motion_ids])
-            .floor()
-            .long()
-        )
+
+        #随机
+        if self.cfg.fix_origin_index >= 0:
+            # Fixed origin index for debugging: always use the same terrain grid cell, no randomization.
+            sample_i = torch.clamp(
+                torch.full((len(assigned_ids),), self.cfg.fix_origin_index, dtype=torch.long, device=self.output_device),
+                max=(self._all_motion_num_selectable_origins[motion_ids] - 1).long(),
+            )
+        else:
+            
+            sample_i = (
+                (torch.rand(len(assigned_ids)).to(self.output_device) * self._all_motion_num_selectable_origins[motion_ids])
+                .floor()
+                .long()
+            )
         self._assigned_env_origins[assigned_ids] = self._all_motion_origins_in_scene[motion_ids, sample_i]
 
     def _get_motion_based_origin(self, env_origins: torch.Tensor, env_ids: Sequence[int] | torch.Tensor):

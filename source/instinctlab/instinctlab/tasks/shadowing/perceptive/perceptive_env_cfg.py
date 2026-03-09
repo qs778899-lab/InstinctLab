@@ -733,6 +733,6 @@ class PerceptiveShadowingEnvCfg(InstinctLabRLEnvCfg):
         self.sim.dt = 1.0 / 50.0 / self.decimation
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
-        self.sim.physx.gpu_max_rigid_patch_count = 10 * 2**15
-        self.sim.physx.gpu_max_rigid_contact_count = 2**27
-        self.sim.physx.gpu_collision_stack_size = 2**27
+        self.sim.physx.gpu_max_rigid_patch_count = 2**15
+        self.sim.physx.gpu_max_rigid_contact_count = 2**21
+        self.sim.physx.gpu_collision_stack_size = 2**25

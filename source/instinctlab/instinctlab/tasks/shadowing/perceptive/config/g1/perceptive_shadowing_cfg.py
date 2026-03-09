@@ -25,7 +25,7 @@ from instinctlab.sensors import get_link_prim_targets
 
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
-MOTION_FOLDER = "{AbsolutePathOfYourDataDirectory}"
+MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
 
 
 @configclass
@@ -100,7 +100,7 @@ motion_reference_cfg = MotionReferenceManagerCfg(
 @configclass
 class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
     scene: perceptual_cfg.PerceptiveShadowingSceneCfg = perceptual_cfg.PerceptiveShadowingSceneCfg(
-        num_envs=4096,
+        num_envs=1024,
         robot=G1_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot"),
         motion_reference=motion_reference_cfg,
     )
@@ -175,6 +175,8 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         self.scene.motion_reference.motion_buffers[MOTION_NAME].motion_start_from_middle_range = [0.0, 0.0]
         self.scene.motion_reference.motion_buffers[MOTION_NAME].motion_bin_length_s = None
         self.scene.motion_reference.motion_buffers[MOTION_NAME].env_starting_stub_sampling_strategy = "independent"
+        # Fix origin to index 0: always place robot on the first terrain grid cell, no random origin sampling.
+        self.scene.motion_reference.motion_buffers[MOTION_NAME].fix_origin_index = 0
         # self.scene.motion_reference.motion_buffers[MOTION_NAME].path = (
         #     "/localhdd/Datasets/NoKov-Marslab-Motions-instinctnpz/20251116_50cm_kneeClimbStep1/20251106_diveroll4_roadRamp_noWall"
         # )
