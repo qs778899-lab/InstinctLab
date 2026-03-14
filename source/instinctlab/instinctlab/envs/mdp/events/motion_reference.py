@@ -177,6 +177,25 @@ def reset_robot_state_by_reference(
         env_ids=env_ids,
     )
 
+    # Print foot positions for debugging
+    if len(env_ids) > 0:
+        # Get link indices for feet
+        left_foot_idx = asset.find_bodies("left_ankle_roll_link")[0][0]
+        right_foot_idx = asset.find_bodies("right_ankle_roll_link")[0][0]
+        
+        # Get world positions of the feet
+        # Note: asset.data.body_pos_w is updated after write_joint_state_to_sim and a sim step, 
+        # but we can estimate it or use the reference data if available.
+        # Alternatively, we can use the reference data directly from motion_ref_init_state if it contains link info.
+        # For G1, we'll print the current simulated world positions.
+        foot_pos_w = asset.data.body_pos_w[env_ids]
+        left_foot_pos = foot_pos_w[:, left_foot_idx]
+        right_foot_pos = foot_pos_w[:, right_foot_idx]
+        
+        for i, env_id in enumerate(env_ids):
+            if i < 5: # Limit printing to first 5 envs to avoid terminal flooding
+                print(f"[Reset Env {env_id.item()}] left_ankle_roll_link: {left_foot_pos[i].tolist()}, right_ankle_roll_link: {right_foot_pos[i].tolist()}")
+
 
 def beyondmimic_bin_fail_counter_smoothing(
     env: ManagerBasedEnv,

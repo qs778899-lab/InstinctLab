@@ -4,6 +4,7 @@ import inspect
 import os
 import pickle as pkl
 import yaml
+import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -487,8 +488,11 @@ class AmassMotion(MotionBuffer):
 
     def _refresh_motion_file_list(self):
         """Refresh the motion files list and motion weights from the file system."""
+        # if the path is a file, just use that file
+        if os.path.isfile(self.cfg.path):
+            all_motion_files = [self.cfg.path]
         # search through all the files in the directory and record the files ending with "_poses.npz"
-        if self.cfg.filtered_motion_selection_filepath is not None:
+        elif self.cfg.filtered_motion_selection_filepath is not None:
             if self.cfg.subset_selection is not None:
                 print("Warning: subset_selection is ignored when filtered_motion_files is provided.")
             with open(self.cfg.filtered_motion_selection_filepath) as f:
@@ -511,10 +515,17 @@ class AmassMotion(MotionBuffer):
         else:
             all_motion_files = []
             for root, _, files in os.walk(self.cfg.path, followlinks=True):
-                for file in files:
-                    for endings in self.cfg.supported_file_endings:
-                        if file.endswith(endings):
-                            all_motion_files.append(os.path.join(root, file))
+                        for file in files:
+                            for endings in self.cfg.supported_file_endings:
+                                if file.endswith(endings):
+                                    all_motion_files.append(os.path.join(root, file))
+        
+        # natural sort the motion files based on the file name
+        def natural_sort_key(s):
+            return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
+        
+        all_motion_files.sort(key=natural_sort_key)
+
         self._all_motion_files: list[str] = all_motion_files
 
         # hack to override motion file list for debugging

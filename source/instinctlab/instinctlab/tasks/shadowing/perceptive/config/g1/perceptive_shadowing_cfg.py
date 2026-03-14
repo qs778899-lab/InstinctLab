@@ -25,8 +25,8 @@ from instinctlab.sensors import get_link_prim_targets
 
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
-MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
-
+# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
+MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
 
 @configclass
 class TerrainMotionCfg(TerrainMotionCfgBase):
