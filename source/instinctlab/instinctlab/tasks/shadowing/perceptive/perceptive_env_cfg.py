@@ -18,7 +18,6 @@ from isaaclab.utils import configclass
 from isaaclab.utils.noise import UniformNoiseCfg
 
 import instinctlab.envs.mdp as instinct_mdp
-import torch
 from instinctlab.envs.manager_based_rl_env_cfg import InstinctLabRLEnvCfg
 from instinctlab.managers import MultiRewardCfg
 from instinctlab.monitors import (
@@ -49,26 +48,6 @@ from instinctlab.utils.noise import (
 
 # PROPRIO_HISTORY_LENGTH = 0
 PROPRIO_HISTORY_LENGTH = 8
-
-
-def debug_nan_checker(env):
-    """用于检查并打印 NaN 来源的调试函数"""
-    robot_pos = env.scene["robot"].data.root_pos_w
-    # 检查机器人坐标
-    if torch.isnan(robot_pos).any():
-        nan_envs = torch.where(torch.isnan(robot_pos).any(dim=-1))[0]
-        print(f"\033[91m[DEBUG NAN] Robot Pos NaN detected! Env IDs: {nan_envs.tolist()}\033[0m")
-        # print(f"Robot Pos Sample: {robot_pos[nan_envs[0]]}")
-
-    # 检查参考动作坐标
-    motion_ref = env.scene["motion_reference"]
-    ref_pos = motion_ref.data.base_pos_w
-    if torch.isnan(ref_pos).any():
-        nan_ref_envs = torch.where(torch.isnan(ref_pos).any(dim=-1).any(dim=-1))[0]
-        motion_ids = motion_ref.get_current_motion_identifiers(nan_ref_envs)
-        print(f"\033[91m[DEBUG NAN] Reference Pos NaN detected! Motions: {motion_ids}\033[0m")
-
-    return torch.zeros((env.num_envs, 1), device=env.device)
 
 
 @configclass
@@ -292,7 +271,6 @@ class ObservationsCfg:
             func=mdp.last_action,
             history_length=PROPRIO_HISTORY_LENGTH,
         )
-        # nan_debug = ObsTermCfg(func=debug_nan_checker)
 
         def __post_init__(self):
             self.enable_corruption = True
