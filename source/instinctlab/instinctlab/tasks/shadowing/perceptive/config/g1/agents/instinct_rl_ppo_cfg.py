@@ -75,7 +75,7 @@ class G1PerceptiveShadowingPPORunnerCfg(InstinctRlOnPolicyRunnerCfg):
 
     num_steps_per_env = 24
     max_iterations = 50000
-    save_interval = 300
+    save_interval = 200 #保存频率
     log_interval = 10
     experiment_name = "g1_perceptive_shadowing"
 

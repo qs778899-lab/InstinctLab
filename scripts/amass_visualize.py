@@ -10,8 +10,8 @@ parser.add_argument("--motion_path", type=str, default=os.path.expanduser("~/Dat
 parser.add_argument("--debug", action="store_true", default=False, help="Enable debug mode.")
 parser.add_argument("--live_plot", action="store_true", default=False, help="Plot some critical lines alive")
 parser.add_argument("--video", type=str, default=None, help="Path to save the video.")
-parser.add_argument("--print_foot_pos", action="store_true", default=False, help="Print foot positions every N frames.")
-parser.add_argument("--print_interval", type=int, default=50, help="Interval for printing foot positions.")
+parser.add_argument("--print_foot_pos", action="store_true", default=False, help="Print foot positions every N motion frames.")
+parser.add_argument("--print_interval", type=int, default=50, help="Interval in motion frames for printing foot positions.")
 parser.add_argument("--interactive", action="store_true", default=False, help="Enable interactive mode to switch motions with 'a' and 's'.")
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
@@ -188,7 +188,7 @@ def run_simulator(sim: SimulationContext, scene: InteractiveScene):
             _plotter_counter = 0
 
         # simulation loop
-        _print_counter = 0
+        last_printed_motion_frame = -1
         while simulation_app.is_running():
             # check for keyboard input
             key = get_key()
@@ -202,16 +202,26 @@ def run_simulator(sim: SimulationContext, scene: InteractiveScene):
             # write robot data based on motion reference
             motion_reference_frame = motion_reference.reference_frame
             
-            # print foot positions if enabled
-            if args_cli.print_foot_pos and _print_counter % args_cli.print_interval == 0:
-                motion_name = amass_buffer._all_motion_files[current_motion_idx].split('/')[-1]
-                print(f"--- Step {_print_counter} (Motion: {motion_name}) ---")
-                links = motion_reference.cfg.link_of_interests
-                pos_w = motion_reference_frame.link_pos_w[0, 0] # [num_links, 3]
-                for i, link_name in enumerate(links):
-                    if "ankle" in link_name or "foot" in link_name:
-                        print(f"Link: {link_name}, Pos: {pos_w[i].cpu().numpy()}")
-            _print_counter += 1
+            # Print by motion-frame index so it matches frame-based viewers.
+            if args_cli.print_foot_pos:
+                assigned_motion_idx = amass_buffer._assigned_env_motion_selection[0].item()
+                motion_fps = amass_buffer._all_motion_sequences.framerate[assigned_motion_idx].item()
+                motion_start_time_s = amass_buffer._motion_buffer_start_time_s[0].item()
+                motion_time_s = motion_reference._timestamp[0].item()
+                motion_frame_idx = int(round((motion_start_time_s + motion_time_s) * motion_fps))
+
+                if (
+                    motion_frame_idx != last_printed_motion_frame
+                    and motion_frame_idx % args_cli.print_interval == 0
+                ):
+                    last_printed_motion_frame = motion_frame_idx
+                    motion_name = amass_buffer._all_motion_files[assigned_motion_idx].split('/')[-1]
+                    print(f"--- Frame {motion_frame_idx} (Motion: {motion_name}) ---")
+                    links = motion_reference.cfg.link_of_interests
+                    pos_w = motion_reference_frame.link_pos_w[0, 0] # [num_links, 3]
+                    for i, link_name in enumerate(links):
+                        if "ankle" in link_name or "foot" in link_name:
+                            print(f"Link: {link_name}, Pos: {pos_w[i].cpu().numpy()}")
 
             # robot.root_physx_view.set_dof_positions(
             #     motion_reference_frame.joint_pos[:, 0],

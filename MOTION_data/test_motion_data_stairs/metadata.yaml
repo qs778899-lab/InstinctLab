@@ -1,12 +1,6 @@
 motion_files:
 - motion_file: stairs027_retargeted.npz
   terrain_id: 0
-- motion_file: stairs028_retargeted.npz
-  terrain_id: 0
-- motion_file: stairs029_retargeted.npz
-  terrain_id: 0
-- motion_file: stairs031_retargeted.npz
-  terrain_id: 0
 terrains:
 - terrain_file: stairs_terrain.stl
   terrain_id: 0

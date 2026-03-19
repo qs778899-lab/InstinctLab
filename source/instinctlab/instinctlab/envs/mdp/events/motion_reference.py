@@ -194,7 +194,8 @@ def reset_robot_state_by_reference(
         
         for i, env_id in enumerate(env_ids):
             if i < 5: # Limit printing to first 5 envs to avoid terminal flooding
-                print(f"[Reset Env {env_id.item()}] left_ankle_roll_link: {left_foot_pos[i].tolist()}, right_ankle_roll_link: {right_foot_pos[i].tolist()}")
+                pass
+                # print(f"[Reset Env {env_id.item()}] left_ankle_roll_link: {left_foot_pos[i].tolist()}, right_ankle_roll_link: {right_foot_pos[i].tolist()}")
 
 
 def beyondmimic_bin_fail_counter_smoothing(

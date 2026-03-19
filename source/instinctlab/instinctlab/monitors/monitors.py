@@ -413,6 +413,10 @@ class ShadowingPositionMonitorTerm(MonitorTerm):
         )
 
         self._num_frames_should_reach += in_frame_mask.to(torch.int)
+        # print("[DEBUG] in_frame_mask: ",in_frame_mask)
+        # print("[DEBUG] num_frames_should_reach: ",self._num_frames_should_reach)
+        
+
 
     def reset_idx(self, env_ids: Sequence[int] | slice):
         self._episodic_base_pos_error = self._base_pos_error[env_ids] / self._num_frames_should_reach[env_ids]
@@ -428,6 +432,7 @@ class ShadowingPositionMonitorTerm(MonitorTerm):
 
     def get_log(self, is_episode=False) -> dict[str, float | torch.Tensor]:
         if is_episode:
+            # print("[DEBUG] when episode, base_pos_error: ",self._episodic_base_pos_error)
             return {
                 "base_pos_error": self._episodic_base_pos_error.nanmean().item(),
                 "base_pos_error_xy": self._episodic_base_pos_error_xy.nanmean().item(),
@@ -435,6 +440,7 @@ class ShadowingPositionMonitorTerm(MonitorTerm):
                 "base_pos_error_z_max": self._episodic_base_pos_error_z_max.max().item(),
             }
         else:
+            # print("[DEBUG] when not episode, base_pos_error: ",self._base_pos_error)
             return {
                 "base_pos_error": (self._base_pos_error / self._num_frames_should_reach).nanmean().item(),
                 "base_pos_error_currently": self._base_pos_error_currently.nanmean().item(),
