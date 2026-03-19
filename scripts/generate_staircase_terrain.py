@@ -44,19 +44,20 @@ try:
 except ImportError:
     raise ImportError("Please install trimesh: pip install trimesh")
 
+# python scripts/generate_staircase_terrain.py --output_dir /home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs  --output_name
 
 # ──────────────────────────────────────────────
 # Staircase parameters (from create_step_obj.py)
 # ──────────────────────────────────────────────
 NUM_STEPS = 4
-STEP_DEPTH = 0.4       # Y direction (per step), meters
-STEP_HEIGHT = 0.155     # Z direction (per step), meters
-STEP_WIDTH_X = 1.59    # X direction (1.73 - 0.14), meters
+STEP_DEPTH = 0.4*0.74       # Y direction (per step), meters
+STEP_HEIGHT = 0.15*0.74     # Z direction (per step), meters
+STEP_WIDTH_X = 1.59*0.74    # X direction (1.73 - 0.14), meters
 
 # Holosoma coordinate: stair bottom face starts at Y=2.0, robot at Y=0
 # After GMR conversion: robot at Y≈+0.2, stair bottom at Y≈+0.2
 # => stair bottom Y offset in terrain-local coords:
-STAIR_START_Y = -0.2    # where the first step begins (terrain-local, +Y side)
+STAIR_START_Y = -0.21    # where the first step begins (terrain-local, +Y side)
 STAIR_CENTER_X = 1.0    # X coordinate (terrain-local) of the staircase center
 
 # Border parameters (flat ground around the staircase)
