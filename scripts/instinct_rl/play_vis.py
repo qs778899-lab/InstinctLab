@@ -1,4 +1,4 @@
-"""Script to play a checkpoint if an RL agent from Instinct-RL."""
+"""Script to visualize an RL agent/reference scene with Instinct-RL."""
 
 """Launch Isaac Sim Simulator first."""
 
@@ -13,7 +13,7 @@ from isaaclab.app import AppLauncher
 import cli_args  # isort: skip
 
 # add argparse arguments
-parser = argparse.ArgumentParser(description="Play an RL agent with Instinct-RL.")
+parser = argparse.ArgumentParser(description="Visualize an RL agent/reference scene with Instinct-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=3000, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_start_step", type=int, default=0, help="Start step for the simulation.")
@@ -38,6 +38,62 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="Whether to assign auxiliary rewards to each of the env's reward term.",
+)
+parser.add_argument(
+    "--freeze_policy",
+    action="store_true",
+    default=False,
+    help="Keep policy actions at zero for the whole run to only visualize the reference scene.",
+)
+parser.add_argument(
+    "--robot_offset",
+    type=float,
+    nargs=3,
+    default=[0.0, 1.0, 2.0],
+    metavar=("X", "Y", "Z"),
+    help="Offset the simulated robot so the reference robot stays on the terrain.",
+)
+parser.add_argument(
+    "--reference_offset",
+    type=float,
+    nargs=3,
+    default=[0.0, 0.0, 0.0],
+    metavar=("X", "Y", "Z"),
+    help="Offset applied to the visualized reference robot.",
+)
+parser.add_argument(
+    "--viewer_asset",
+    type=str,
+    default="robot_reference",
+    help="Asset name for the viewer to follow after visualization overrides are applied.",
+)
+parser.add_argument(
+    "--viewer_eye",
+    type=float,
+    nargs=3,
+    default=None,
+    metavar=("X", "Y", "Z"),
+    help="Override viewer eye position.",
+)
+parser.add_argument(
+    "--viewer_lookat",
+    type=float,
+    nargs=3,
+    default=None,
+    metavar=("X", "Y", "Z"),
+    help="Override viewer lookat position.",
+)
+parser.add_argument(
+    "--keep_play_defaults",
+    action="store_true",
+    default=False,
+    help="Disable play_vis visualization overrides and keep the original play task settings.",
+)
+parser.add_argument(
+    "--print_debug_layout",
+    action="store_true",
+    default=False,
+    help="Print observation/action layout debug information.",
 )
 # append Instinct-RL cli arguments
 cli_args.add_instinct_rl_args(parser)
@@ -178,12 +234,42 @@ def _print_policy_action_debug(vec_env: InstinctRlVecEnvWrapper, policy, tag: st
         print(f"  {action_idx:02d}: {joint_name:30s} {float(action_sample[action_idx]): .6f}")
 
 
+def _apply_visualization_overrides(env_cfg) -> None:
+    """Tune the play config for reference-motion visualization."""
+    if args_cli.keep_play_defaults:
+        return
+
+    viewer_cfg = getattr(env_cfg, "viewer", None)
+    if viewer_cfg is not None:
+        viewer_cfg.asset_name = args_cli.viewer_asset
+        if args_cli.viewer_eye is not None:
+            viewer_cfg.eye = list(args_cli.viewer_eye)
+        if args_cli.viewer_lookat is not None:
+            viewer_cfg.lookat = list(args_cli.viewer_lookat)
+
+    motion_reference_cfg = getattr(getattr(env_cfg, "scene", None), "motion_reference", None)
+    if motion_reference_cfg is not None and hasattr(motion_reference_cfg, "visualizing_robot_offset"):
+        motion_reference_cfg.visualizing_robot_offset = tuple(args_cli.reference_offset)
+
+    reset_robot_event = getattr(getattr(env_cfg, "events", None), "reset_robot", None)
+    if reset_robot_event is not None and "position_offset" in reset_robot_event.params:
+        reset_robot_event.params["position_offset"] = list(args_cli.robot_offset)
+
+    print(
+        "[INFO] play_vis overrides:",
+        f"viewer_asset={getattr(viewer_cfg, 'asset_name', None)}",
+        f"robot_offset={args_cli.robot_offset}",
+        f"reference_offset={args_cli.reference_offset}",
+    )
+
+
 def main():
     """Play with Instinct-RL agent."""
     # parse configuration
     env_cfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
+    _apply_visualization_overrides(env_cfg)
     agent_cfg: InstinctRlOnPolicyRunnerCfg = cli_args.parse_instinct_rl_cfg(args_cli.task, args_cli)
 
     # specify directory for logging experiments
@@ -248,8 +334,8 @@ def main():
     # wrap around environment for instinct-rl
     env = InstinctRlVecEnvWrapper(env)
 
-    # print order
-    _print_policy_observation_debug(env, tag="InstinctLab")
+    if args_cli.print_debug_layout:
+        _print_policy_observation_debug(env, tag="InstinctLab")
 
     # load previously trained model
     ppo_runner = OnPolicyRunner(env, agent_cfg_dict, log_dir=None, device=agent_cfg.device)
@@ -263,8 +349,8 @@ def main():
     else:
         policy = ppo_runner.get_inference_policy(device=env.unwrapped.device)
 
-    # print order
-    _print_policy_action_debug(env, policy, tag="InstinctLab")
+    if args_cli.print_debug_layout:
+        _print_policy_action_debug(env, policy, tag="InstinctLab")
 
     # export policy to onnx/jit
     if agent_cfg.load_run is not None:
@@ -285,7 +371,7 @@ def main():
         with torch.inference_mode():
             # agent stepping
             actions = policy(obs)
-            if timestep < args_cli.zero_act_until:
+            if args_cli.freeze_policy or timestep < args_cli.zero_act_until:
                 actions[:] = 0.0
             # env stepping
             obs, rewards, dones, infos = env.step(actions)
