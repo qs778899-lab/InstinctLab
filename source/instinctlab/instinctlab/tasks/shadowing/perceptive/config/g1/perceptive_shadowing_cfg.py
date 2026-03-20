@@ -25,8 +25,8 @@ from instinctlab.sensors import get_link_prim_targets
 
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
-MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
-# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
+# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
+MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
 
 @configclass
 class TerrainMotionCfg(TerrainMotionCfgBase):
@@ -159,7 +159,7 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
     )
 
     viewer: ViewerCfg = ViewerCfg(
-        eye=[5.8, 0.0, 0.2], #1.5, 0.0, 1.5
+        eye=[5.8, 2.5, 0.5], #1.5, 0.0, 1.5
         lookat=[0.0, 0.0, 0.0],
         origin_type="asset_root",
         asset_name="robot",
