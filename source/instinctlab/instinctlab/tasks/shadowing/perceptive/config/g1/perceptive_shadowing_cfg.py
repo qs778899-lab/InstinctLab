@@ -25,8 +25,15 @@ from instinctlab.sensors import get_link_prim_targets
 
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
+#walk: 修改 PLANE_TERRAIN 为true
+MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_walk"
+
+#climb: 修改 PLANE_TERRAIN 为false
 # MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
-MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
+
+#example data: 修改 PLANE_TERRAIN 为false
+# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
+
 
 @configclass
 class TerrainMotionCfg(TerrainMotionCfgBase):
@@ -118,10 +125,12 @@ class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
         self.scene.motion_reference.motion_buffers[MOTION_NAME].metadata_yaml = os.path.join(
             self.scene.motion_reference.motion_buffers[MOTION_NAME].path, "metadata.yaml"
         )
-        PLANE_TERRAIN = False
+        #手动修改地形加载模式：true为平面，false为地形匹配
+        PLANE_TERRAIN = True
         if PLANE_TERRAIN:
             self.scene.motion_reference.motion_buffers.pop(MOTION_NAME)
             self.scene.motion_reference.motion_buffers["AMASSMotion"] = AMASSMotionCfg()
+            MOTION_NAME = "AMASSMotion"
             self.scene.terrain.terrain_type = "plane"
             self.scene.terrain.terrain_generator = None
         else:
