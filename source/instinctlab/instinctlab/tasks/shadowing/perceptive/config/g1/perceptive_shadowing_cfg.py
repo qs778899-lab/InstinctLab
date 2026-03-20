@@ -168,7 +168,7 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
     )
 
     viewer: ViewerCfg = ViewerCfg(
-        eye=[5.8, 2.5, 0.5], #1.5, 0.0, 1.5
+        eye=[5.8, 0.5, 0.5], #1.5, 0.0, 1.5
         lookat=[0.0, 0.0, 0.0],
         origin_type="asset_root",
         asset_name="robot",
@@ -201,8 +201,10 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
             )
 
         # Use non-terrain-matching motion and plane to hack the scene.
-        self.scene.terrain.terrain_generator.num_rows = 6
-        self.scene.terrain.terrain_generator.num_cols = 6
+        #为兼容plane模式，增加判断条件
+        if self.scene.terrain.terrain_generator is not None:
+            self.scene.terrain.terrain_generator.num_rows = 6
+            self.scene.terrain.terrain_generator.num_cols = 6
         # self.scene.motion_reference.motion_buffers.pop(MOTION_NAME)
         # self.scene.motion_reference.motion_buffers["AMASSMotion"] = AMASSMotionCfg()
         # self.scene.motion_reference.motion_buffers["AMASSMotion"].motion_start_from_middle_range = [0.0, 0.0]
