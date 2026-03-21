@@ -58,7 +58,7 @@ class G1BeyondMimicPPORunnerCfg(InstinctRlOnPolicyRunnerCfg):
 
     num_steps_per_env = 24
     max_iterations = 30000
-    save_interval = 1000
+    save_interval = 200
     log_interval = 10
     experiment_name = "g1_beyondmimic"
 

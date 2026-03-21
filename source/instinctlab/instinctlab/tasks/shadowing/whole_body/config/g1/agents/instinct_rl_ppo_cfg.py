@@ -163,7 +163,7 @@ class G1ShadowingPPORunnerCfg(InstinctRlOnPolicyRunnerCfg):
 
     num_steps_per_env = 24
     max_iterations = 50000
-    save_interval = 1000
+    save_interval = 500
     log_interval = 10
     experiment_name = "g1_shadowing"
 

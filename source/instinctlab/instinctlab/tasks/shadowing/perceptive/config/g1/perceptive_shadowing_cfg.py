@@ -107,7 +107,7 @@ motion_reference_cfg = MotionReferenceManagerCfg(
 @configclass
 class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
     scene: perceptual_cfg.PerceptiveShadowingSceneCfg = perceptual_cfg.PerceptiveShadowingSceneCfg(
-        num_envs=256,
+        num_envs=512,
         robot=G1_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot"),
         motion_reference=motion_reference_cfg,
     )

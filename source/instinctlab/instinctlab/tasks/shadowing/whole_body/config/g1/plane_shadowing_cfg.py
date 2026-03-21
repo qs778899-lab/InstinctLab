@@ -48,125 +48,10 @@ from instinctlab.utils.humanoid_ik import HumanoidSmplRotationalIK
 combine_method = "prod"
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
-# MOTION_NAME = "AccadRun" # success
-# _hacked_selected_file_ = "ACCAD/Male2Running_c3d/C5 - walk to run_retargetted.npz"
 
-# MOTION_NAME = "AccadMartialBounce"
-# _hacked_selected_file_ = "ACCAD/MartialArtsWalksTurns_c3d/E8 - bounce_retargetted.npz"
-# MOTION_NAME = "KitStomp"
-# _hacked_selected_file_ = "KIT/3/stomp_left03_retargetted.npz"
-
-# MOTION_NAME = "AccadMartialSpin"
-# _hacked_selected_file_ = "ACCAD/Male2MartialArtsKicks_c3d/G20_-__reverse_spin_cresent_right_retargetted.npz"
-# MOTION_NAME = "KitStretch"  # requires balancing
-# _hacked_selected_file_ = "KIT/3/streching_leg01_retargetted.npz"
-
-MOTION_NAME = "LafanKungfu1"
-_hacked_selected_files_ = ["fightAndSports1_subject1_retargetted.npz"]
-# MOTION_NAME = "LafanSprint1"
-# _hacked_selected_files_ = ["sprint1_subject2_retargetted.npz"]
-
-# MOTION_NAME = "test"
-# _hacked_selected_files_ = ["CMU/90/90_26_retargetted.npz"]
-
-MOTION_NAME = "LafanFight5Files"
-_path_ = os.path.expanduser("~/Datasets/UbisoftLAFAN1_GMR_g1_29dof_torsoBase_retargetted_instinctnpz")
-_hacked_selected_files_ = [
-    "fight1_subject2_retargetted.npz",
-    "fight1_subject3_retargetted.npz",
-    "fight1_subject5_retargetted.npz",
-    "fightAndSports1_subject1_retargetted.npz",
-    "fightAndSports1_subject4_retargetted.npz",
-]
-
-
-MOTION_NAME = "LafanFiltered"
-_path_ = os.path.expanduser("~/Datasets/UbisoftLAFAN1_GMR_g1_29dof_torsoBase_retargetted_instinctnpz")
-_hacked_selected_files_ = [
-    "aiming1_subject1_retargetted.npz",  # O
-    "aiming1_subject4_retargetted.npz",  # O
-    "aiming2_subject2_retargetted.npz",  # O
-    "aiming2_subject3_retargetted.npz",  # O
-    "aiming2_subject5_retargetted.npz",  # O
-    "dance1_subject1_retargetted.npz",  # O
-    "dance1_subject2_retargetted.npz",  # O
-    "dance1_subject3_retargetted.npz",  # O
-    "dance2_subject1_retargetted.npz",  # O
-    "dance2_subject2_retargetted.npz",  # O
-    "dance2_subject3_retargetted.npz",  # O
-    "dance2_subject4_retargetted.npz",  # O
-    "dance2_subject5_retargetted.npz",  # O
-    "fallAndGetUp1_subject1_retargetted.npz",  # O
-    "fallAndGetUp1_subject4_retargetted.npz",  # O
-    "fallAndGetUp1_subject5_retargetted.npz",  # O
-    "fallAndGetUp2_subject2_retargetted.npz",  # O
-    "fallAndGetUp2_subject3_retargetted.npz",  # O
-    "fallAndGetUp3_subject1_retargetted.npz",  # O
-    "fight1_subject2_retargetted.npz",  # O
-    "fight1_subject3_retargetted.npz",  # O
-    "fight1_subject5_retargetted.npz",  # O
-    "fightAndSports1_subject1_retargetted.npz",  # O
-    "fightAndSports1_subject4_retargetted.npz",  # O
-    "ground1_subject1_retargetted.npz",  # O
-    "ground1_subject4_retargetted.npz",  # O
-    "ground1_subject5_retargetted.npz",  # O
-    "ground2_subject2_retargetted.npz",  # O
-    "ground2_subject3_retargetted.npz",  # O
-    "jumps1_subject1_retargetted.npz",  # O
-    "jumps1_subject2_retargetted.npz",  # O
-    "jumps1_subject5_retargetted.npz",  # O
-    "multipleActions1_subject1_retargetted.npz",  # O
-    "multipleActions1_subject2_retargetted.npz",  # O
-    # "multipleActions1_subject3_retargetted.npz", # X
-    # "multipleActions1_subject4_retargetted.npz", # - (some sitting pose, but seems torlerable)
-    # "obstacles1_subject1_retargetted.npz", # X
-    # "obstacles1_subject2_retargetted.npz", # X
-    # "obstacles1_subject5_retargetted.npz", # X
-    # "obstacles2_subject1_retargetted.npz", # X
-    # "obstacles2_subject2_retargetted.npz", # X
-    # "obstacles2_subject5_retargetted.npz", # disable all obstacles
-    # "obstacles3_subject3_retargetted.npz", # disable all obstacles
-    # "obstacles3_subject4_retargetted.npz", # disable all obstacles
-    # "obstacles4_subject2_retargetted.npz", # disable all obstacles
-    # "obstacles4_subject3_retargetted.npz", # X  # disable all obstacles
-    # "obstacles4_subject4_retargetted.npz", # disable all obstacles
-    # "obstacles5_subject2_retargetted.npz", # disable all obstacles
-    # "obstacles5_subject3_retargetted.npz", # disable all obstacles
-    # "obstacles5_subject4_retargetted.npz", # disable all obstacles
-    # "obstacles6_subject1_retargetted.npz", # disable all obstacles
-    # "obstacles6_subject4_retargetted.npz", # disable all obstacles
-    # "obstacles6_subject5_retargetted.npz", # disable all obstacles
-    "push1_subject2_retargetted.npz",  # O
-    "pushAndFall1_subject1_retargetted.npz",  # O
-    "pushAndFall1_subject4_retargetted.npz",  # O
-    "pushAndStumble1_subject2_retargetted.npz",  # O
-    "pushAndStumble1_subject3_retargetted.npz",  # O
-    "pushAndStumble1_subject5_retargetted.npz",  # O
-    "run1_subject2_retargetted.npz",
-    "run1_subject5_retargetted.npz",
-    "run2_subject1_retargetted.npz",
-    "run2_subject4_retargetted.npz",
-    "sprint1_subject2_retargetted.npz",
-    "sprint1_subject4_retargetted.npz",
-    "walk1_subject1_retargetted.npz",
-    "walk1_subject2_retargetted.npz",
-    "walk1_subject5_retargetted.npz",
-    "walk2_subject1_retargetted.npz",
-    "walk2_subject3_retargetted.npz",
-    "walk2_subject4_retargetted.npz",
-    "walk3_subject1_retargetted.npz",
-    "walk3_subject2_retargetted.npz",
-    "walk3_subject3_retargetted.npz",
-    "walk3_subject4_retargetted.npz",
-    "walk3_subject5_retargetted.npz",
-    "walk4_subject1_retargetted.npz",  # O
-]
-
-# MOTION_NAME = "LafanGetup2S3"
-# _path_ = os.path.expanduser("~/Datasets/UbisoftLAFAN1_GMR_g1_29dof_torsoBase_retargetted_instinctnpz")
-# _hacked_selected_files_ = [
-#     "fallAndGetUp2_subject3_retargetted.npz",
-# ]
+MOTION_NAME = "walk01"
+# _path_ = os.path.expanduser("/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_walk")
+_hacked_selected_files_ = ["SLP101_stageii_retargeted.npz"]
 
 with open(f"/tmp/{MOTION_NAME}.yaml", "w") as f:
     yaml.dump(
@@ -179,12 +64,9 @@ with open(f"/tmp/{MOTION_NAME}.yaml", "w") as f:
 
 @configclass
 class AmassMotionCfg(AmassMotionCfgBase):
-    # path = os.path.expanduser("~/Datasets/AMASS_CMU_KIT_ACCAD_DanceDB_HumanEva_retargetted_20250702")
-    # path = os.path.expanduser("~/Datasets/AMASS_SMPLX-NG_GMR_29dof_g1_torsoBase_retargetted_20250825_instinctnpz")
-    # path = os.path.expanduser("~/Datasets/UbisoftLAFAN1_GMR_g1_29dof_torsoBase_retargetted_instinctnpz")
-    # path = os.path.expanduser("~/Datasets/AMASS_SMPLX-NG_GMR_29dof_g1_torsoBase_retargetted_20250901_instinctnpz")
     # path = _path_
-    path = os.path.expanduser("~/Datasets/NoKov-Marslab-Motions-instinctnpz/20251016_diveroll4_single")
+    path = os.path.expanduser("/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_walk")
+    # path = os.path.expanduser("~/Datasets/NoKov-Marslab-Motions-instinctnpz/20251016_diveroll4_single")
     retargetting_func = HumanoidSmplRotationalIK #修改
     retargetting_func_kwargs = {"robot_chain": G1_CFG.spawn.asset_path} #修改
     filtered_motion_selection_filepath = None
@@ -280,7 +162,7 @@ motion_reference_cfg = MotionReferenceManagerCfg(
 @configclass
 class G1PlaneShadowingEnvCfg(shadowing_cfg.ShadowingEnvCfg):
     scene: shadowing_cfg.ShadowingSceneCfg = shadowing_cfg.ShadowingSceneCfg(
-        num_envs=4096,
+        num_envs=512,
         robot=G1_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot"),
         motion_reference=motion_reference_cfg,
     )
@@ -417,7 +299,7 @@ class G1PlaneShadowingEnvCfg_PLAY(G1PlaneShadowingEnvCfg):
         ),
     )
     viewer: ViewerCfg = ViewerCfg(
-        eye=[4.0, 0.75, 1.0],
+        eye=[5.8, 0.5, 0.5],
         lookat=[0.0, 0.75, 0.0],
         origin_type="asset_root",
         asset_name="robot",
