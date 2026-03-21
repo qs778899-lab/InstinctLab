@@ -26,10 +26,10 @@ from instinctlab.sensors import get_link_prim_targets
 G1_CFG = G1_29DOF_TORSOBASE_POPSICLE_CFG
 
 #walk: 修改 PLANE_TERRAIN 为true
-MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_walk"
+# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_walk"
 
 #climb: 修改 PLANE_TERRAIN 为false
-# MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
+MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs"
 
 #example data: 修改 PLANE_TERRAIN 为false
 # MOTION_FOLDER = "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_contactmotion"
@@ -126,7 +126,7 @@ class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
             self.scene.motion_reference.motion_buffers[MOTION_NAME].path, "metadata.yaml"
         )
         #手动修改地形加载模式：true为平面，false为地形匹配
-        PLANE_TERRAIN = True
+        PLANE_TERRAIN = False
         if PLANE_TERRAIN:
             self.scene.motion_reference.motion_buffers.pop(MOTION_NAME)
             self.scene.motion_reference.motion_buffers["AMASSMotion"] = AMASSMotionCfg()
@@ -213,6 +213,11 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         # self.scene.terrain.terrain_generator = None
 
         self.scene.camera.debug_vis = True
+
+        # virtual obstacles
+        self.scene.terrain.debug_vis = True
+        self.scene.leg_volume_points.debug_vis = True
+
         self.observations.policy.depth_image.params["debug_vis"] = True
 
         # change reset robot event with more pitch_down randomization (since the robot is facing -y axis)

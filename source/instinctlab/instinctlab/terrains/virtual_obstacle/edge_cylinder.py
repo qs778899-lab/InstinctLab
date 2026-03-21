@@ -96,6 +96,11 @@ class EdgeCylinder(VirtualObstacleBase):
             self._cylinder_visualizer.set_visibility(False)
 
     def visualize(self):
+
+        # virtual obstacles
+        if not hasattr(self, "edges_pyt"):
+            return
+            
         if self.edges_pyt.numel() == 0:
             return
 
@@ -135,8 +140,9 @@ class EdgeCylinder(VirtualObstacleBase):
     def get_points_penetration_offset(self, points):
         return (
             self.cylinders.get_points_penetration_offset(points)
-            if self.cylinders is not None
-            else torch.zeros_like(points, device=self.device)
+            # virtual obstacles
+            if hasattr(self, "cylinders") and self.cylinders is not None
+            else torch.zeros_like(points, device=points.device)
         )
 
     def process_edges(self, edge_coords: np.ndarray) -> np.ndarray:
@@ -596,6 +602,9 @@ class RayEdgeCylinder(VirtualObstacleBase):
             self._points_visualizer.set_visibility(False)
 
     def visualize(self):
+        # virtual obstacles
+        if not hasattr(self, "edges_pyt"):
+            return
         if self.edges_pyt.numel() == 0:
             return
 
@@ -646,8 +655,9 @@ class RayEdgeCylinder(VirtualObstacleBase):
     def get_points_penetration_offset(self, points):
         return (
             self.cylinders.get_points_penetration_offset(points)
-            if self.cylinders is not None
-            else torch.zeros_like(points, device=self.device)
+            # virtual obstacles
+            if hasattr(self, "cylinders") and self.cylinders is not None
+            else torch.zeros_like(points, device=points.device)
         )
 
 
@@ -727,6 +737,9 @@ class FeatureEdgeCylinder(VirtualObstacleBase):
             self._cylinder_visualizer.set_visibility(False)
 
     def visualize(self):
+        # virtual obstacles
+        if not hasattr(self, "edges_pyt"):
+            return
         if self.edges_pyt.numel() == 0:
             return
 
@@ -766,8 +779,9 @@ class FeatureEdgeCylinder(VirtualObstacleBase):
     def get_points_penetration_offset(self, points):
         return (
             self.cylinders.get_points_penetration_offset(points)
-            if self.cylinders is not None
-            else torch.zeros_like(points, device=self.device)
+            # virtual obstacles
+            if hasattr(self, "cylinders") and self.cylinders is not None
+            else torch.zeros_like(points, device=points.device)
         )
 
 

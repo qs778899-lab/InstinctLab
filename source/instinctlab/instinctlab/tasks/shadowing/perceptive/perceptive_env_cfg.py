@@ -30,8 +30,9 @@ from instinctlab.monitors import (
     ShadowingRotationMonitorTerm,
 )
 from instinctlab.motion_reference import MotionReferenceManagerCfg
-from instinctlab.sensors import GroupedRayCasterCfg, NoisyGroupedRayCasterCameraCfg
+from instinctlab.sensors import Grid3dPointsGeneratorCfg, GroupedRayCasterCfg, NoisyGroupedRayCasterCameraCfg, VolumePointsCfg
 from instinctlab.tasks.shadowing import mdp as shadowing_mdp
+from instinctlab.terrains import GreedyconcatEdgeCylinderCfg
 from instinctlab.terrains.terrain_generator_cfg import FiledTerrainGeneratorCfg
 from instinctlab.terrains.terrain_importer_cfg import TerrainImporterCfg
 from instinctlab.terrains.trimesh import MotionMatchedTerrainCfg
@@ -93,6 +94,16 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
             mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
             project_uvw=True,
         ),
+
+        # virtual obstacles
+        debug_vis=False,
+        virtual_obstacles={
+            "edges": GreedyconcatEdgeCylinderCfg(
+                cylinder_radius=0.03,
+                min_points=2,
+            ),
+        },
+
     )
 
     # lights
@@ -178,6 +189,23 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
     )
     contact_forces = ContactSensorCfg(
         prim_path="{ENV_REGEX_NS}/Robot/.*", history_length=3, track_air_time=True, force_threshold=10.0
+    )
+
+    # virtual obstacles
+    leg_volume_points = VolumePointsCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/.*_ankle_roll_link",
+        points_generator=Grid3dPointsGeneratorCfg(
+            x_min=-0.025,
+            x_max=0.12,
+            x_num=5,
+            y_min=-0.03,
+            y_max=0.03,
+            y_num=5,
+            z_min=-0.0001,
+            z_max=0.0,
+            z_num=1,
+        ),
+        debug_vis=False,
     )
 
     def __post_init__(self):
@@ -404,6 +432,27 @@ class RewardsCfg:
             "threshold": 1.0,
         },
     )
+
+    # virtual obstacles
+    # Keep terrain-aware penalties modest so they regularize imitation instead of overriding it.
+    volume_points_penetration = RewTermCfg(
+        func=instinct_mdp.volume_points_penetration,
+        weight= -1, #-1.0
+        params={
+            "sensor_cfg": SceneEntityCfg("leg_volume_points"),
+        },
+    )
+    feet_slide = RewTermCfg(
+        func=instinct_mdp.contact_slide,
+        weight= -0.1, #-0.2
+        params={
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_ankle_roll_link"),
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_ankle_roll_link"),
+            "threshold": 1.0,
+        },
+    )
+
+
     applied_torque_limits_by_ratio = RewTermCfg(
         func=instinct_mdp.applied_torque_limits_by_ratio,
         weight=-0.05,
@@ -515,6 +564,16 @@ class EventsCfg:
             "motion_ref_cfg": SceneEntityCfg("motion_reference"),
         },
     )
+
+    # virtual obstacles
+    register_virtual_obstacles = EventTermCfg(
+        func=instinct_mdp.register_virtual_obstacle_to_sensor,
+        mode="startup",
+        params={
+            "sensor_cfgs": SceneEntityCfg("leg_volume_points"),
+        },
+    )
+
     reset_robot = EventTermCfg(
         func=instinct_mdp.reset_robot_state_by_reference,
         mode="reset",
