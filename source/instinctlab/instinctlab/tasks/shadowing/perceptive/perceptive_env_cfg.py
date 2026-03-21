@@ -196,12 +196,12 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/.*_ankle_roll_link",
         points_generator=Grid3dPointsGeneratorCfg(
             x_min=-0.025,
-            x_max=0.12,
+            x_max=0.135,
             x_num=5,
             y_min=-0.03,
             y_max=0.03,
             y_num=5,
-            z_min=-0.0001,
+            z_min=-0.015,
             z_max=0.0,
             z_num=1,
         ),
@@ -587,8 +587,8 @@ class EventsCfg:
             "base_ang_vel_ratio": 1.0,
             # Pose randomization (+-5cm position, +-6degrees rotation)
             "randomize_pose_range": {
-                "x": (-0.15, 0.15),
-                "y": (-0.15, 0.15),
+                "x": (-0.05, 0.05), #默认：5cm
+                "y": (-0.05, 0.05), #默认：5cm
                 "z": (-0.0, 0.0),
             },
             # Velocity randomization (+-0.1 m/s linear, +-0.1 rad/s angular)

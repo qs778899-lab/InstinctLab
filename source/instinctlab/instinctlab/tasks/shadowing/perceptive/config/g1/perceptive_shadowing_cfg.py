@@ -112,6 +112,13 @@ class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
         motion_reference=motion_reference_cfg,
     )
 
+    viewer: ViewerCfg = ViewerCfg(
+        eye=[5.8, 0.5, 0.5], #1.5, 0.0, 1.5
+        lookat=[0.0, 0.0, 0.0],
+        origin_type="asset_root",
+        asset_name="robot",
+    )
+
     def __post_init__(self):
         super().__post_init__()
 
