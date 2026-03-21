@@ -1,11 +1,11 @@
 from __future__ import annotations
-
+import re
 import torch
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import omni.physics.tensors.impl.api as physx
-
+from isaacsim.core.simulation_manager import SimulationManager
 import isaaclab.sim as sim_utils
 import isaaclab.utils.math as math_utils
 import isaaclab.utils.string as string_utils
@@ -96,15 +96,19 @@ class VolumePoints(SensorBase):
     def _initialize_impl(self):
         super()._initialize_impl()
         # create simulation view
-        self._physics_sim_view = physx.create_simulation_view(self._backend)
-        self._physics_sim_view.set_subspace_roots("/")
+        self._physics_sim_view = SimulationManager.get_physics_sim_view()
+
         # check that only rigid bodies are selected
         leaf_pattern = self.cfg.prim_path.rsplit("/", 1)[-1]
         template_prim_path = self._parent_prims[0].GetPath().pathString
         body_names = list()
-        for prim in sim_utils.find_matching_prims(template_prim_path + "/" + leaf_pattern):
-            prim_path = prim.GetPath().pathString
-            body_names.append(prim_path.rsplit("/", 1)[-1])
+        leaf_regex = re.compile(f"^{leaf_pattern}$")
+        for prim in sim_utils.get_all_matching_child_prims(
+            template_prim_path,
+            predicate=lambda p: leaf_regex.match(p.GetName()) is not None,
+            depth=1,
+        ):
+            body_names.append(prim.GetName())
         if not body_names:
             raise RuntimeError(f"Sensor at path '{self.cfg.prim_path}' could not find any bodies.")
 
@@ -243,6 +247,7 @@ class VolumePoints(SensorBase):
         # call parent
         super()._invalidate_initialize_callback(event)
         # set all existing views to None to invalidate them
-        delattr(self, "points_visualizer")
+        if hasattr(self, "point_visualizer"):
+            delattr(self, "points_visualizer")
         self._physics_sim_view = None
         self._body_physx_view = None

@@ -27,4 +27,7 @@ def get_link_prim_targets(
     """Build the raycast target given the list of links. It will combine and return a list of
     MultiMeshRayCasterCfg.RaycastTargetCfg.
     """
-    return [MultiMeshRayCasterCfg.RaycastTargetCfg(prim_expr=f"{prefix}{link}{suffix}", **kwargs) for link in links]
+    return [
+        MultiMeshRayCasterCfg.RaycastTargetCfg(prim_expr=f"{prefix}{link}{suffix}", is_shared=is_shared, **kwargs)
+        for link in links
+    ]
