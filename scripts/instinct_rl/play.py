@@ -39,11 +39,17 @@ parser.add_argument(
     default=False,
     help="Whether to assign auxiliary rewards to each of the env's reward term.",
 )
+
+# virtual obstacles
 # append Instinct-RL cli arguments
 cli_args.add_instinct_rl_args(parser)
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
-args_cli = parser.parse_args()
+args_cli, hydra_args = parser.parse_known_args()
+
+# clear out sys.argv for Hydra
+sys.argv = [sys.argv[0]] + hydra_args
+
 # always enable cameras to record video
 if args_cli.video:
     args_cli.enable_cameras = True
@@ -63,10 +69,11 @@ import torch
 from instinct_rl.runners import OnPolicyRunner
 
 import isaaclab.utils.math as math_utils
-from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
+from isaaclab.envs import DirectMARLEnv, DirectMARLEnvCfg, DirectRLEnvCfg, ManagerBasedRLEnvCfg, multi_agent_to_single_agent
 from isaaclab.utils.dict import print_dict
 from isaaclab.utils.io import load_yaml
 from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
+from isaaclab_tasks.utils.hydra import hydra_task_config
 
 # Import extensions to set up environment tasks
 import instinctlab.tasks  # noqa: F401
@@ -177,13 +184,19 @@ def _print_policy_action_debug(vec_env: InstinctRlVecEnvWrapper, policy, tag: st
     for action_idx, joint_name in enumerate(robot_joint_names):
         print(f"  {action_idx:02d}: {joint_name:30s} {float(action_sample[action_idx]): .6f}")
 
-
-def main():
+# virtual obstacles
+@hydra_task_config(args_cli.task, "env_cfg_entry_point")
+def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: InstinctRlOnPolicyRunnerCfg | None = None):
     """Play with Instinct-RL agent."""
-    # parse configuration
-    env_cfg = parse_env_cfg(
-        args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
-    )
+    # update env_cfg based on cli arguments
+    env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
+    env_cfg.sim.device = args_cli.device if args_cli.device is not None else env_cfg.sim.device
+    if args_cli.disable_fabric:
+        env_cfg.sim.use_fabric = False
+    else:
+        env_cfg.sim.use_fabric = True
+        
+    # Re-parse agent cfg manually using Instinct-RL's parser as it handles checkpoint paths differently
     agent_cfg: InstinctRlOnPolicyRunnerCfg = cli_args.parse_instinct_rl_cfg(args_cli.task, args_cli)
 
     # specify directory for logging experiments

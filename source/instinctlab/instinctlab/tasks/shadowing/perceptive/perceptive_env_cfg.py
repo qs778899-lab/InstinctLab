@@ -195,13 +195,13 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
     leg_volume_points = VolumePointsCfg(
         prim_path="{ENV_REGEX_NS}/Robot/.*_ankle_roll_link",
         points_generator=Grid3dPointsGeneratorCfg(
-            x_min=-0.025,
+            x_min=-0.05,
             x_max=0.135,
             x_num=5,
             y_min=-0.03,
             y_max=0.03,
             y_num=5,
-            z_min=-0.015,
+            z_min=-0.023,
             z_max=0.0,
             z_num=1,
         ),
