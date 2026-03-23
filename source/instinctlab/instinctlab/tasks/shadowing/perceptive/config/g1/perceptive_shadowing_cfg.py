@@ -235,6 +235,11 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         self.terminations.base_pg_too_far = None
         self.terminations.link_pos_too_far = None
 
+        # 修改play模式
+        self.terminations.dataset_exhausted = None
+        # extend episode length for play
+        self.episode_length_s = 20.0
+
         # put the reference in scene and move the robot elsewhere and visualize the reference
         # self.events.reset_robot.params["position_offset"] = [0.0, 1.0, 2.0]
         # self.scene.motion_reference.visualizing_robot_offset = (0.0, 0.0, 0.0)
