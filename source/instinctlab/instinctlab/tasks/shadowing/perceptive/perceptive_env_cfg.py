@@ -371,7 +371,7 @@ class RewardsCfg:
     )
     base_rot_imitation_gauss = RewTermCfg(
         func=instinct_mdp.base_rot_imitation_gauss,
-        weight=0.5,
+        weight=0.75, #0.5 -> 0.75
         params={
             "std": 0.4,
             "difference_type": "axis_angle",
@@ -421,7 +421,7 @@ class RewardsCfg:
     )
     undesired_contacts = RewTermCfg(
         func=mdp.undesired_contacts,
-        weight=-0.1,
+        weight=-0.5, #-0.1 -> -0.5
         params={
             "sensor_cfg": SceneEntityCfg(
                 "contact_forces",
