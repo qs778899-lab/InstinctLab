@@ -205,8 +205,8 @@ class VerticalFacePatch(VirtualObstacleBase):
             [0.5 * self.cfg.patch_thickness, 0.5 * width, 0.5 * height],
             dtype=np.float64,
         )
-        print(f"DEBUG: Generating patch with thickness: {self.cfg.patch_thickness}") 
-        
+        # print(f"DEBUG: Generating patch with thickness: {self.cfg.patch_thickness}") 
+
         return {
             "center": center.astype(np.float32),
             "rotation": rotation.astype(np.float32),

@@ -34,7 +34,7 @@ class VerticalFacePatchCfg(VirtualObstacleCfg):
     min_patch_height: float = 0.04
     """Minimum height of the merged patch in meters."""
 
-    patch_thickness: float = 0.05
+    patch_thickness: float = 0.05 #修改垂直面厚度
     """Thickness of the debug/rendered thin box representing the vertical face."""
 
     visualizer: VisualizationMarkersCfg = VisualizationMarkersCfg(
