@@ -32,7 +32,7 @@ from instinctlab.monitors import (
 from instinctlab.motion_reference import MotionReferenceManagerCfg
 from instinctlab.sensors import Grid3dPointsGeneratorCfg, GroupedRayCasterCfg, NoisyGroupedRayCasterCameraCfg, VolumePointsCfg
 from instinctlab.tasks.shadowing import mdp as shadowing_mdp
-from instinctlab.terrains import GreedyconcatEdgeCylinderCfg
+from instinctlab.terrains import GreedyconcatEdgeCylinderCfg, VerticalFacePatchCfg
 from instinctlab.terrains.terrain_generator_cfg import FiledTerrainGeneratorCfg
 from instinctlab.terrains.terrain_importer_cfg import TerrainImporterCfg
 from instinctlab.terrains.trimesh import MotionMatchedTerrainCfg
@@ -102,6 +102,7 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
                 cylinder_radius=0.03,
                 min_points=2,
             ),
+            "vertical_faces": VerticalFacePatchCfg(), #vertical
         },
 
     )
@@ -196,7 +197,23 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/.*_ankle_roll_link",
         points_generator=Grid3dPointsGeneratorCfg(
             x_min=-0.05,
-            x_max=0.135,
+            x_max=0.145, #0.135 -> 0.145
+            x_num=5,
+            y_min=-0.03,
+            y_max=0.03,
+            y_num=5,
+            z_min=-0.023,
+            z_max=0.0,
+            z_num=1,
+        ),
+        debug_vis=False,
+    )
+    #vertical
+    leg_vertical_face_points = VolumePointsCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/.*_ankle_roll_link",
+        points_generator=Grid3dPointsGeneratorCfg(
+            x_min=-0.05,
+            x_max=0.145, #0.135 -> 0.145
             x_num=5,
             y_min=-0.03,
             y_max=0.03,
@@ -437,11 +454,21 @@ class RewardsCfg:
     # Keep terrain-aware penalties modest so they regularize imitation instead of overriding it.
     volume_points_penetration = RewTermCfg(
         func=instinct_mdp.volume_points_penetration,
-        weight= -1, #-1.0
+        weight= -1.5, #-1.0 -> -1.5
         params={
             "sensor_cfg": SceneEntityCfg("leg_volume_points"),
         },
     )
+
+    #vertical
+    vertical_face_penetration = RewTermCfg(
+        func=instinct_mdp.volume_points_penetration,
+        weight=-1.5,
+        params={
+            "sensor_cfg": SceneEntityCfg("leg_vertical_face_points"),
+        },
+    )
+
     feet_slide = RewTermCfg(
         func=instinct_mdp.contact_slide,
         weight= -0.1, #-0.2
@@ -566,11 +593,21 @@ class EventsCfg:
     )
 
     # virtual obstacles
-    register_virtual_obstacles = EventTermCfg(
+    #vertical
+    register_edge_virtual_obstacles = EventTermCfg(
         func=instinct_mdp.register_virtual_obstacle_to_sensor,
         mode="startup",
         params={
             "sensor_cfgs": SceneEntityCfg("leg_volume_points"),
+            "obstacle_names": ["edges"],
+        },
+    )
+    register_vertical_face_virtual_obstacles = EventTermCfg(
+        func=instinct_mdp.register_virtual_obstacle_to_sensor,
+        mode="startup",
+        params={
+            "sensor_cfgs": SceneEntityCfg("leg_vertical_face_points"),
+            "obstacle_names": ["vertical_faces"],
         },
     )
 

@@ -19,6 +19,10 @@ class VirtualObstacleCfg:
 
     visualizer: VisualizationMarkersCfg = MISSING
     """The visualizer configuration for the virtual obstacle."""
+    
+    #vertical
+    generate_only_when_debug_vis: bool = False
+    """If True, the obstacle is generated only when terrain debug visualization is enabled."""
 
 
 class VirtualObstacleBase(ABC):

@@ -17,11 +17,13 @@ if TYPE_CHECKING:
 class TerrainImporter(TerrainImporterBase):
     def __init__(self, cfg: TerrainImporterCfg):
         self._virtual_obstacles = {}
+        self._virtual_obstacle_cfgs = {} #vertical
         for name, virtual_obstacle_cfg in cfg.virtual_obstacles.items():
             if virtual_obstacle_cfg is None:
                 continue
             virtual_obstacle = virtual_obstacle_cfg.class_type(virtual_obstacle_cfg)
             self._virtual_obstacles[name] = virtual_obstacle
+            self._virtual_obstacle_cfgs[name] = virtual_obstacle_cfg #vertical
 
         if cfg.terrain_type == "hacked_generator":
             self._hacked_terrain_type = "hacked_generator"
@@ -64,6 +66,12 @@ class TerrainImporter(TerrainImporterBase):
         # Generate virtual obstacles based on the imported mesh.
         # NOTE: generate virtual obstacle first because it might modify the mesh.
         for name, virtual_obstacle in self._virtual_obstacles.items():
+
+            #vertical
+            virtual_obstacle_cfg = self._virtual_obstacle_cfgs[name]
+            if getattr(virtual_obstacle_cfg, "generate_only_when_debug_vis", False) and not self.cfg.debug_vis:
+                continue
+
             with Timer(f"Generate virtual obstacle {name}"):
                 virtual_obstacle.generate(mesh, device=self.device)
 
