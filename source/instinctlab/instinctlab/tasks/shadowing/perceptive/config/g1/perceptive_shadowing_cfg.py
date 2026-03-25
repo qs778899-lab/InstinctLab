@@ -113,7 +113,7 @@ class G1PerceptiveShadowingEnvCfg(perceptual_cfg.PerceptiveShadowingEnvCfg):
     )
 
     viewer: ViewerCfg = ViewerCfg(
-        eye=[5.8, 0.5, 0.5], #1.5, 0.0, 1.5
+        eye=[5.8, 10, 0.5], #1.5, 0.0, 1.5
         lookat=[0.0, 0.0, 0.0],
         origin_type="asset_root",
         asset_name="robot",

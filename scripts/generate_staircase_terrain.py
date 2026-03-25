@@ -57,8 +57,8 @@ STEP_WIDTH_X = 1.59    # X direction (1.73 - 0.14), meters
 # Holosoma coordinate: stair bottom face starts at Y=2.0, robot at Y=0
 # After GMR conversion: robot at Y≈+0.2, stair bottom at Y≈+0.2
 # => stair bottom Y offset in terrain-local coords:
-STAIR_START_Y = -0.08  #-0.21  # where the first step begins (terrain-local, +Y side)
-STAIR_CENTER_X = 1.15   #1.0  # X coordinate (terrain-local) of the staircase center
+STAIR_START_Y = -0.12  #-0.21  # where the first step begins (terrain-local, +Y side)
+STAIR_CENTER_X = 1.15   #1.0 #1.15 # X coordinate (terrain-local) of the staircase center
 
 # Border parameters (flat ground around the staircase)
 BORDER_SIZE = 2.0      # meters of flat ground on each side
