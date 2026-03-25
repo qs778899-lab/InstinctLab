@@ -175,7 +175,7 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
     )
 
     viewer: ViewerCfg = ViewerCfg(
-        eye=[5.8, 2.5, 0.5], #1.5, 0.0, 1.5
+        eye=[5, 0.5, 0.5], #1.5, 0.0, 1.5
         lookat=[0.0, 0.0, 0.0],
         origin_type="asset_root",
         asset_name="robot",
@@ -224,6 +224,7 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         # virtual obstacles
         self.scene.terrain.debug_vis = True
         self.scene.leg_volume_points.debug_vis = True
+        self.scene.leg_vertical_face_points.debug_vis = True
 
         self.observations.policy.depth_image.params["debug_vis"] = True
 

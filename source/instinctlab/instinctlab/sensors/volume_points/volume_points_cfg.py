@@ -9,6 +9,7 @@ from isaaclab.utils import configclass
 from .points_generator_cfg import PointsGeneratorCfg
 from .volume_points import VolumePoints
 
+#vertical
 VOLUME_POINTS_VISUALIZER_CFG = VisualizationMarkersCfg(
     prim_path="/Visuals/volumePoints",
     markers={
@@ -18,7 +19,22 @@ VOLUME_POINTS_VISUALIZER_CFG = VisualizationMarkersCfg(
         ),
         "sphere_penetrated": sim_utils.SphereCfg(
             radius=0.012,
-            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.05, 0.05)),
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.5, 0.0)),
+        ),
+    },
+)
+
+#vertical
+VERTICAL_VOLUME_POINTS_VISUALIZER_CFG = VisualizationMarkersCfg(
+    prim_path="/Visuals/verticalVolumePoints",
+    markers={
+        "sphere": sim_utils.SphereCfg(
+            radius=0.01,
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.8, 1.0)),
+        ),
+        "sphere_penetrated": sim_utils.SphereCfg(
+            radius=0.013,
+            visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 1.0)),
         ),
     },
 )

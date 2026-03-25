@@ -30,7 +30,13 @@ from instinctlab.monitors import (
     ShadowingRotationMonitorTerm,
 )
 from instinctlab.motion_reference import MotionReferenceManagerCfg
-from instinctlab.sensors import Grid3dPointsGeneratorCfg, GroupedRayCasterCfg, NoisyGroupedRayCasterCameraCfg, VolumePointsCfg
+from instinctlab.sensors import (
+    VERTICAL_VOLUME_POINTS_VISUALIZER_CFG,
+    Grid3dPointsGeneratorCfg,
+    GroupedRayCasterCfg,
+    NoisyGroupedRayCasterCameraCfg,
+    VolumePointsCfg,
+)
 from instinctlab.tasks.shadowing import mdp as shadowing_mdp
 from instinctlab.terrains import GreedyconcatEdgeCylinderCfg, VerticalFacePatchCfg
 from instinctlab.terrains.terrain_generator_cfg import FiledTerrainGeneratorCfg
@@ -222,6 +228,7 @@ class PerceptiveShadowingSceneCfg(InteractiveSceneCfg):
             z_max=0.0,
             z_num=1,
         ),
+        visualizer_cfg=VERTICAL_VOLUME_POINTS_VISUALIZER_CFG,
         debug_vis=False,
     )
 

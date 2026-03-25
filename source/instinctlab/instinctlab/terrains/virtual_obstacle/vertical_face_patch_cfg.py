@@ -34,7 +34,7 @@ class VerticalFacePatchCfg(VirtualObstacleCfg):
     min_patch_height: float = 0.04
     """Minimum height of the merged patch in meters."""
 
-    patch_thickness: float = 0.02
+    patch_thickness: float = 0.05
     """Thickness of the debug/rendered thin box representing the vertical face."""
 
     visualizer: VisualizationMarkersCfg = VisualizationMarkersCfg(
@@ -42,7 +42,7 @@ class VerticalFacePatchCfg(VirtualObstacleCfg):
         markers={
             "patch": sim_utils.MeshCuboidCfg(
                 size=(1.0, 1.0, 1.0),
-                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.95, 0.25, 0.25), opacity=0.18),
+                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.95, 0.25, 0.25), opacity=0.1),
             ),
         },
     )

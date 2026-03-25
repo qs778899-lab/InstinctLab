@@ -17,7 +17,7 @@ class VerticalFacePatch(VirtualObstacleBase):
     """Extract near-vertical terrain faces and represent them as thin OBB patches."""
 
     def __init__(self, cfg):
-        super().__init__(cfg)
+        super().__init__(cfg) #vertical
 
     def generate(self, mesh: trimesh.Trimesh, device: torch.device | str = "cpu") -> None:
         self.device = device if isinstance(device, torch.device) else torch.device(device)
@@ -205,6 +205,8 @@ class VerticalFacePatch(VirtualObstacleBase):
             [0.5 * self.cfg.patch_thickness, 0.5 * width, 0.5 * height],
             dtype=np.float64,
         )
+        print(f"DEBUG: Generating patch with thickness: {self.cfg.patch_thickness}") 
+        
         return {
             "center": center.astype(np.float32),
             "rotation": rotation.astype(np.float32),

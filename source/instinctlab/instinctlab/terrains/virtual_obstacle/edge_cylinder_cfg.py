@@ -41,7 +41,7 @@ class EdgeCylinderCfg(VirtualObstacleCfg):
             "cylinder": sim_utils.CylinderCfg(
                 radius=1,
                 height=1,
-                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.15, 0.35, 1.0), opacity=0.18),
+                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.15, 0.35, 1.0), opacity=0.1),
             )
         },
     )
@@ -152,7 +152,7 @@ class RayEdgeCylinderCfg(VirtualObstacleCfg):
             "cylinder": sim_utils.CylinderCfg(
                 radius=1,
                 height=1,
-                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.15, 0.35, 1.0), opacity=0.18),
+                visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.15, 0.35, 1.0), opacity=0.1),
             )
         },
     )
