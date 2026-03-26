@@ -229,6 +229,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     else:
         agent_cfg_dict = agent_cfg.to_dict()
 
+    if hasattr(env_cfg, "apply_play_overrides"):
+        env_cfg.apply_play_overrides()
+
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
     # wrap for video recording

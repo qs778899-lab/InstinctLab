@@ -258,7 +258,10 @@ Perceptive Shadowing 任务旨在让机器人通过视觉感知（深度图）�
     python scripts/generate_staircase_terrain.py --output_name stairs_terrain.stl
 
     # 训练
-    python scripts/instinct_rl/train.py --task=Instinct-Perceptive-Shadowing-G1-v0  --headless 'env.scene.motion_reference.motion_buffers.TerrainMotion.motion_start_from_middle_range=[0.0,0.0]' env.scene.motion_reference.motion_buffers.TerrainMotion.fix_origin_index=0 --resume --load_run 20260322_ --checkpoint model_.pt 'events.physics_material.params.static_friction_range=[0.8,1.5]'  'events.physics_material.params.dynamic_friction_range=[0.4,1.3]'
+    python scripts/instinct_rl/train.py --task=Instinct-Perceptive-Shadowing-G1-v0  --headless 'env.scene.motion_reference.motion_buffers.TerrainMotion.motion_start_from_middle_range=[0.0,0.0]' env.scene.motion_reference.motion_buffers.TerrainMotion.fix_origin_index=0 --resume --load_run 20260325_ --checkpoint model_78000.pt 'events.physics_material.params.static_friction_range=[0.8,1.8]'  'events.physics_material.params.dynamic_friction_range=[0.4,1.6]' 'env.events.randomize_ray_offsets.params.offset_pose_ranges.pitch=[-0.21, 0.21]'  'env.events.base_com.params.com_range.y=[-0.16, 0.16]'  'env.events.base_com.params.com_range.x=[-0.05, 0.05]'
+
+
+  
 
     tmux new -s train
     tmux attach -t train
@@ -390,8 +393,19 @@ Perceptive Shadowing 任务旨在让机器人通过视觉感知（深度图）�
     python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260321_234155 --num_envs 1 --checkpoint model_65000.pt
     python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_115057 --num_envs 1 --checkpoint model_73000.pt 'env.scene.terrain.debug_vis=False' 'env.scene.leg_volume_points.debug_vis=False'
     ## climb original_size (STAIR_START_Y = -0.08)
-    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt 'env.events.physics_material.static_friction_range=[0.6,1.2]' 'env.events.physics_material.dynamic_friction_range=[0.4,1.3]'
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt 'env.play_physics_material_override.static_friction_range=[0.3,0.35]' 'env.play_physics_material_override.dynamic_friction_range=[0.2,0.25]' #摩擦
 
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt 'env.play_base_com_override.y=[-0.35, -0.3]' #重心
+
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt   'env.events.reset_robot.params.randomize_pose_range.y=[-0.1,-0.08]' # 起始位置   
+
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt  'env.observations.policy.joint_pos.noise.n_min=-0.05'  'env.observations.policy.joint_pos.noise.n_max=0.05'  'env.observations.policy.joint_vel.noise.n_min=-1.0' 'env.observations.policy.joint_vel.noise.n_max=1.0'   #观测噪声
+
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt  'env.observations.policy.joint_pos.noise.n_min=-0.05'  'env.observations.policy.joint_pos.noise.n_max=0.05'  'env.observations.policy.joint_vel.noise.n_min=-1.0' 'env.observations.policy.joint_vel.noise.n_max=1.0' 'env.events.randomize_ray_offsets.params.offset_pose_ranges.pitch=[0.1, 0.1]' 'env.scene.motion_reference.debug_vis=False'  #相机角度，向下俯
+
+    python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260322_175243 --num_envs 1 --checkpoint model_48000.pt  'env.observations.policy.joint_pos.noise.n_min=-0.05'  'env.observations.policy.joint_pos.noise.n_max=0.05'  'env.observations.policy.joint_vel.noise.n_min=-1.0' 'env.observations.policy.joint_vel.noise.n_max=1.0' 'env.events.randomize_ray_offsets.params.offset_pose_ranges.pitch=[0.1, 0.1]' 'env.scene.motion_reference.debug_vis=False' 'env.play_base_com_override.y=[-0.15, -0.15]' 'env.play_physics_material_override.static_friction_range=[0.9,1.0]'
+
+    会不会是机器人关节标定不准？
 
     python scripts/instinct_rl/play.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260325_213959 --num_envs 1 --checkpoint model_70000.pt
     ## climb&pick original_size (STAIR_START_Y = -0.12)

@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import os
 
@@ -63,6 +64,58 @@ class AMASSMotionCfg(AmassMotionCfgBase):
     motion_interpolate_func = motion_interpolate_bilinear
     velocity_estimation_method = "frontbackward"
     env_starting_stub_sampling_strategy = "concat_motion_bins"
+
+#play参数修改
+@configclass
+class PlayPhysicsMaterialOverrideCfg:
+    static_friction_range: list[float] | tuple[float, float] | None = None
+    dynamic_friction_range: list[float] | tuple[float, float] | None = None
+    restitution_range: list[float] | tuple[float, float] | None = None
+    make_consistent: bool | None = None
+    num_buckets: int | None = None
+
+    def enabled(self) -> bool:
+        return any(
+            value is not None
+            for value in (
+                self.static_friction_range,
+                self.dynamic_friction_range,
+                self.restitution_range,
+                self.make_consistent,
+                self.num_buckets,
+            )
+        )
+@configclass
+class PlayBaseComOverrideCfg:
+    x: list[float] | tuple[float, float] | None = None
+    y: list[float] | tuple[float, float] | None = None
+    z: list[float] | tuple[float, float] | None = None
+
+    def enabled(self) -> bool:
+        return any(value is not None for value in (self.x, self.y, self.z))
+@configclass
+class PlayActuatorGainsOverrideCfg:
+    stiffness_distribution_params: list[float] | tuple[float, float] | None = None
+    damping_distribution_params: list[float] | tuple[float, float] | None = None
+
+    def enabled(self) -> bool:
+        return any(
+            value is not None
+            for value in (
+                self.stiffness_distribution_params,
+                self.damping_distribution_params,
+            )
+        )
+@configclass
+class PlayRigidBodyMassOverrideCfg:
+    mass_distribution_params: list[float] | tuple[float, float] | None = None
+
+    def enabled(self) -> bool:
+        return self.mass_distribution_params is not None
+def _maybe_tuple(value):
+    if value is None:
+        return None
+    return tuple(value)
 
 
 motion_reference_cfg = MotionReferenceManagerCfg(
@@ -181,6 +234,16 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         asset_name="robot",
     )
 
+    #play参数修改
+    play_physics_material_override: PlayPhysicsMaterialOverrideCfg = PlayPhysicsMaterialOverrideCfg()
+    play_base_com_override: PlayBaseComOverrideCfg = PlayBaseComOverrideCfg()
+    play_actuator_gains_override: PlayActuatorGainsOverrideCfg = PlayActuatorGainsOverrideCfg()
+    play_rigid_body_mass_override: PlayRigidBodyMassOverrideCfg = PlayRigidBodyMassOverrideCfg()
+
+    def _restore_play_optional_event(self, event_name: str):
+        template = self._play_optional_event_templates[event_name]
+        setattr(self.events, event_name, copy.deepcopy(template))
+
     def __post_init__(self):
         super().__post_init__()
 
@@ -246,11 +309,24 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
         # self.scene.motion_reference.visualizing_robot_offset = (0.0, 0.0, 0.0)
         # self.viewer.asset_name = "robot_reference"
 
-        # remove some randomizations
+        # Preserve the existing play reset behavior, but disable these optional
+        # domain randomizations by default. They can be re-enabled later after
+        # Hydra CLI overrides are applied through apply_play_overrides().
+        #play参数修改
         self.events.add_joint_default_pos = None
+        self.events.push_robot = None
+        self._play_optional_event_templates = {
+            "base_com": self.events.base_com,
+            "physics_material": self.events.physics_material,
+            "randomize_actuator_gains": self.events.randomize_actuator_gains,
+            "randomize_rigid_body_mass": self.events.randomize_rigid_body_mass,
+        }
         self.events.base_com = None
         self.events.physics_material = None
-        self.events.push_robot = None
+        self.events.randomize_actuator_gains = None
+        self.events.randomize_rigid_body_mass = None
+
+
         self.events.reset_robot.params["randomize_pose_range"]["x"] = [0.0] * 2  # (+-0.6)
         self.events.reset_robot.params["randomize_pose_range"]["y"] = [0.0] * 2  # (+-0.6)
         self.events.reset_robot.params["randomize_pose_range"]["z"] = (0.0, 0.0)
@@ -372,3 +448,79 @@ class G1PerceptiveShadowingEnvCfg_PLAY(G1PerceptiveShadowingEnvCfg):
 
         # see the reference robot
         # self.scene.camera.mesh_prim_paths.append("/World/envs/env_.*/RobotReference/.*")
+
+    def apply_play_overrides(self):
+        if self.play_base_com_override.enabled():
+            self._restore_play_optional_event("base_com")
+            if self.play_base_com_override.x is not None:
+                self.events.base_com.params["com_range"]["x"] = _maybe_tuple(self.play_base_com_override.x)
+            if self.play_base_com_override.y is not None:
+                self.events.base_com.params["com_range"]["y"] = _maybe_tuple(self.play_base_com_override.y)
+            if self.play_base_com_override.z is not None:
+                self.events.base_com.params["com_range"]["z"] = _maybe_tuple(self.play_base_com_override.z)
+            print("[PLAY-DR] base_com enabled with com_range=" f"{self.events.base_com.params['com_range']}")
+        else:
+            self.events.base_com = None
+            print("[PLAY-DR] base_com disabled")
+
+        if self.play_physics_material_override.enabled():
+            self._restore_play_optional_event("physics_material")
+            if self.play_physics_material_override.static_friction_range is not None:
+                self.events.physics_material.params["static_friction_range"] = _maybe_tuple(
+                    self.play_physics_material_override.static_friction_range
+                )
+            if self.play_physics_material_override.dynamic_friction_range is not None:
+                self.events.physics_material.params["dynamic_friction_range"] = _maybe_tuple(
+                    self.play_physics_material_override.dynamic_friction_range
+                )
+            if self.play_physics_material_override.restitution_range is not None:
+                self.events.physics_material.params["restitution_range"] = _maybe_tuple(
+                    self.play_physics_material_override.restitution_range
+                )
+            if self.play_physics_material_override.make_consistent is not None:
+                self.events.physics_material.params["make_consistent"] = (
+                    self.play_physics_material_override.make_consistent
+                )
+            if self.play_physics_material_override.num_buckets is not None:
+                self.events.physics_material.params["num_buckets"] = self.play_physics_material_override.num_buckets
+            print(
+                "[PLAY-DR] physics_material enabled with "
+                f"static={self.events.physics_material.params.get('static_friction_range')}, "
+                f"dynamic={self.events.physics_material.params.get('dynamic_friction_range')}, "
+                f"restitution={self.events.physics_material.params.get('restitution_range')}"
+            )
+        else:
+            self.events.physics_material = None
+            print("[PLAY-DR] physics_material disabled")
+
+        if self.play_actuator_gains_override.enabled():
+            self._restore_play_optional_event("randomize_actuator_gains")
+            if self.play_actuator_gains_override.stiffness_distribution_params is not None:
+                self.events.randomize_actuator_gains.params["stiffness_distribution_params"] = _maybe_tuple(
+                    self.play_actuator_gains_override.stiffness_distribution_params
+                )
+            if self.play_actuator_gains_override.damping_distribution_params is not None:
+                self.events.randomize_actuator_gains.params["damping_distribution_params"] = _maybe_tuple(
+                    self.play_actuator_gains_override.damping_distribution_params
+                )
+            print(
+                "[PLAY-DR] actuator_gains enabled with "
+                f"stiffness={self.events.randomize_actuator_gains.params.get('stiffness_distribution_params')}, "
+                f"damping={self.events.randomize_actuator_gains.params.get('damping_distribution_params')}"
+            )
+        else:
+            self.events.randomize_actuator_gains = None
+            print("[PLAY-DR] actuator_gains disabled")
+
+        if self.play_rigid_body_mass_override.enabled():
+            self._restore_play_optional_event("randomize_rigid_body_mass")
+            self.events.randomize_rigid_body_mass.params["mass_distribution_params"] = _maybe_tuple(
+                self.play_rigid_body_mass_override.mass_distribution_params
+            )
+            print(
+                "[PLAY-DR] rigid_body_mass enabled with "
+                f"mass_distribution_params={self.events.randomize_rigid_body_mass.params.get('mass_distribution_params')}"
+            )
+        else:
+            self.events.randomize_rigid_body_mass = None
+            print("[PLAY-DR] rigid_body_mass disabled")
