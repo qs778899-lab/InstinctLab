@@ -395,7 +395,7 @@ class RewardsCfg:
     )
     base_rot_imitation_gauss = RewTermCfg(
         func=instinct_mdp.base_rot_imitation_gauss,
-        weight=0.75, #0.5 -> 0.75
+        weight=0.5, #0.5 -> 0.75 -> 0.5
         params={
             "std": 0.4,
             "difference_type": "axis_angle",
@@ -478,7 +478,7 @@ class RewardsCfg:
 
     feet_slide = RewTermCfg(
         func=instinct_mdp.contact_slide,
-        weight= -0.1, #-0.2
+        weight= -0.2, #-0.2
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_ankle_roll_link"),
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_ankle_roll_link"),
@@ -498,6 +498,15 @@ class RewardsCfg:
                     ".*wrist.*",
                 ],
             )
+        },
+    )
+
+    #重力倾斜惩罚
+    projected_gravity_penalty = RewTermCfg(
+        func=shadowing_mdp.flat_orientation_l2,
+        weight=-2.5,
+        params={
+            "asset_cfg": SceneEntityCfg("robot"),
         },
     )
 
