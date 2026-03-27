@@ -246,7 +246,7 @@ Perceptive Shadowing 任务旨在让机器人通过视觉感知（深度图）�
     python scripts/amass_visualize.py --num_envs 1 --motion_path "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs_2.0/stairs27_retargeted.npz" --print_foot_pos --print_interval 20 --print_foot_pos
     python scripts/amass_visualize.py --num_envs 1 --motion_path "/home/huangyucheng/桌面/Project Instinct/InstinctLab/MOTION_data/test_motion_data_stairs_2.0/" --interactive 
     # 可视化retargeting数据 （动作和地形模型对齐， 仍是纯运动学回放）
-    python scripts/instinct_rl/play_vis.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260319_115839 --num_envs 1 --freeze_policy --viewer_eye 5.8 0.6 0.2  --viewer_lookat 0.0 0.0 0.5
+    python scripts/instinct_rl/play_vis.py --task=Instinct-Perceptive-Shadowing-G1-Play-v0 --load_run 20260319_115839 --num_envs 1 --freeze_policy --viewer_eye 5.8 0.6 0.2  --viewer_lookat 0.0 0.0 0.5 --manual_prev_motion_key J --manual_next_motion_key K
 
 
 
@@ -260,14 +260,35 @@ Perceptive Shadowing 任务旨在让机器人通过视觉感知（深度图）�
 
 
     # 训练
-    python scripts/instinct_rl/train.py --task=Instinct-Perceptive-Shadowing-G1-v0  --headless 'env.scene.motion_reference.motion_buffers.TerrainMotion.motion_start_from_middle_range=[0.0,0.0]' env.scene.motion_reference.motion_buffers.TerrainMotion.fix_origin_index=0 --resume --load_run 20260325_213959 --checkpoint model_80000.pt 'env.events.physics_material.params.static_friction_range=[0.8,1.8]'  'env.events.physics_material.params.dynamic_friction_range=[0.4,1.6]' 'env.events.randomize_ray_offsets.params.offset_pose_ranges.pitch=[-0.21, 0.21]'  'env.events.base_com.params.com_range.y=[-0.16, 0.16]'  'env.events.base_com.params.com_range.x=[-0.05, 0.05]'
+    python scripts/instinct_rl/train.py --task=Instinct-Perceptive-Shadowing-G1-v0  --headless 'env.scene.motion_reference.motion_buffers.TerrainMotion.motion_start_from_middle_range=[0.0,0.0]' env.scene.motion_reference.motion_buffers.TerrainMotion.fix_origin_index=0 'env.events.physics_material.params.static_friction_range=[0.8,1.8]'  'env.events.physics_material.params.dynamic_friction_range=[0.4,1.6]' 'env.events.randomize_ray_offsets.params.offset_pose_ranges.pitch=[-0.21, 0.21]'  'env.events.base_com.params.com_range.y=[-0.16, 0.16]'  'env.events.base_com.params.com_range.x=[-0.05, 0.05]'
 
+    --resume --load_run 20260325_ --checkpoint model_.pt 
 
   
     tmux new -s train
     tmux attach -t train
     tmux kill-session -t train
 
+    python scripts/instinct_rl/train.py \
+    --task=Instinct-Perceptive-Shadowing-G1-v0 \
+    --num_envs=1 \
+    env.scene.terrain.terrain_generator.num_rows=1 \
+    env.scene.terrain.terrain_generator.num_cols=1 \
+    'env.events.reset_robot.params.randomize_pose_range.x=[0.0,0.0]' \
+    'env.events.reset_robot.params.randomize_pose_range.y=[0.0,0.0]' \
+    'env.events.reset_robot.params.randomize_pose_range.z=[0.0,0.0]' \
+    'env.events.reset_robot.params.randomize_joint_pos_range=[0.0,0.0]' \
+    env.scene.motion_reference.motion_buffers.TerrainMotion.env_starting_stub_sampling_strategy=independent \
+    env.scene.motion_reference.motion_buffers.TerrainMotion.motion_bin_length_s=null \
+    env.scene.motion_reference.motion_buffers.TerrainMotion.fix_origin_index=0 \
+    'env.scene.motion_reference.motion_buffers.TerrainMotion.motion_start_from_middle_range=[0.0,0.0]' \
+    env.curriculum.beyond_adaptive_sampling=null \
+    env.events.bin_fail_counter_smoothing=null \
+    env.scene.height_scanner.debug_vis=True \
+    env.scene.terrain.debug_vis=True \
+    env.scene.leg_volume_points.debug_vis=True \
+    env.scene.leg_vertical_face_points.debug_vis=True \
+    env.scene.height_scanner.debug_vis=True 
 
 
 

@@ -504,7 +504,7 @@ class RewardsCfg:
     #重力倾斜惩罚
     projected_gravity_penalty = RewTermCfg(
         func=shadowing_mdp.flat_orientation_l2,
-        weight=-2.5,
+        weight= 0, #-2.5 -> 0
         params={
             "asset_cfg": SceneEntityCfg("robot"),
         },

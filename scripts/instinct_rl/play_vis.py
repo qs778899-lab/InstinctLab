@@ -95,6 +95,18 @@ parser.add_argument(
     default=False,
     help="Print observation/action layout debug information.",
 )
+parser.add_argument(
+    "--manual_next_motion_key",
+    type=str,
+    default="N",
+    help="Keyboard key for manually switching to the next motion when num_envs==1.",
+)
+parser.add_argument(
+    "--manual_prev_motion_key",
+    type=str,
+    default="B",
+    help="Keyboard key for manually switching to the previous motion when num_envs==1.",
+)
 # append Instinct-RL cli arguments
 cli_args.add_instinct_rl_args(parser)
 # append AppLauncher cli args
@@ -263,6 +275,104 @@ def _apply_visualization_overrides(env_cfg) -> None:
     )
 
 
+def _setup_single_env_manual_motion_switch(vec_env: InstinctRlVecEnvWrapper):
+    """Set up keyboard-based, button-like motion switching for single-env play."""
+    try:
+        import carb.input as carb_input
+        import omni.appwindow as omni_appwindow
+        from carb.input import KeyboardEventType
+    except ModuleNotFoundError:
+        print(
+            "[WARN] carb/omni appwindow is unavailable in this Python runtime. "
+            "Manual prev/next motion switching is disabled."
+        )
+        return None
+
+    base_env = vec_env.unwrapped
+    if base_env.num_envs != 1:
+        return None
+
+    motion_reference = base_env.scene["motion_reference"]
+    if len(motion_reference.motion_buffers) != 1:
+        print("[WARN] Manual motion switch supports a single motion buffer only. Skip enabling.")
+        return None
+
+    buffer_name = next(iter(motion_reference.motion_buffers.keys()))
+    buffer = motion_reference.motion_buffers[buffer_name]
+    if not hasattr(buffer, "_all_motion_files") or len(buffer._all_motion_files) <= 1:
+        print("[INFO] Manual motion switch disabled: only one motion file is available.")
+        return None
+
+    next_key_name = args_cli.manual_next_motion_key.upper().strip()
+    prev_key_name = args_cli.manual_prev_motion_key.upper().strip()
+    next_key_enum = getattr(carb_input.KeyboardInput, next_key_name, None)
+    prev_key_enum = getattr(carb_input.KeyboardInput, prev_key_name, None)
+    if next_key_enum is None:
+        print(f"[WARN] Unknown next key '{args_cli.manual_next_motion_key}', fallback to N.")
+        next_key_enum = carb_input.KeyboardInput.N
+        next_key_name = "N"
+    if prev_key_enum is None:
+        print(f"[WARN] Unknown prev key '{args_cli.manual_prev_motion_key}', fallback to B.")
+        prev_key_enum = carb_input.KeyboardInput.B
+        prev_key_name = "B"
+
+    env_ids = torch.tensor([0], device=base_env.device, dtype=torch.long)
+    assigned_ids = buffer.env_ids_to_assigned_ids(env_ids).to(buffer.buffer_device)
+    total_motions = len(buffer._all_motion_files)
+
+    switch_state = {"pending_delta": 0}
+
+    def _print_current_motion(tag: str):
+        motion_identifier = motion_reference.get_current_motion_identifiers(env_ids)[0]
+        print(f"[INFO] {tag}: {motion_identifier}")
+
+    def on_keyboard_input(e):
+        if e.type != KeyboardEventType.KEY_PRESS:
+            return True
+        if e.input == next_key_enum:
+            switch_state["pending_delta"] = 1
+        elif e.input == prev_key_enum:
+            switch_state["pending_delta"] = -1
+        return True
+
+    app_window = omni_appwindow.get_default_app_window()
+    keyboard = app_window.get_keyboard()
+    input_iface = carb_input.acquire_input_interface()
+    subscription = input_iface.subscribe_to_keyboard_events(keyboard, on_keyboard_input)
+
+    def process_pending_switch():
+        delta = switch_state["pending_delta"]
+        if delta == 0:
+            return
+        switch_state["pending_delta"] = 0
+
+        curr_idx = int(buffer._assigned_env_motion_selection[assigned_ids][0].item())
+        next_idx = (curr_idx + delta) % total_motions
+
+        # Keep the selected trajectory fixed during this reset and only advance by one.
+        original_sampler = buffer._sample_assigned_env_motion_selection
+        try:
+            def _keep_motion_selection(_assigned_ids):
+                return None
+
+            buffer._sample_assigned_env_motion_selection = _keep_motion_selection
+            buffer._assigned_env_motion_selection[assigned_ids] = next_idx
+            if hasattr(buffer, "_motion_buffer_start_time_s"):
+                buffer._motion_buffer_start_time_s[assigned_ids] = 0.0
+            base_env._reset_idx(torch.tensor([0], device=base_env.device, dtype=torch.long))
+        finally:
+            buffer._sample_assigned_env_motion_selection = original_sampler
+
+        _print_current_motion("Switched to")
+
+    _print_current_motion("Current motion")
+    print(
+        f"[INFO] Press '{prev_key_name}' for previous and '{next_key_name}' for next motion "
+        "in metadata.yaml order."
+    )
+    return process_pending_switch, input_iface, subscription
+
+
 def main():
     """Play with Instinct-RL agent."""
     # parse configuration
@@ -364,11 +474,16 @@ def main():
 
     # reset environment
     obs, _ = env.get_observations()
+    manual_motion_switch_ctx = _setup_single_env_manual_motion_switch(env) #批量播放
     timestep = 0
     # simulate environment
     while simulation_app.is_running():
-        # run everything in inference mode
+        #批量播放 run everything in inference mode
         with torch.inference_mode():
+            # Process manual motion switch in inference mode to avoid
+            # in-place writes on inference tensors during reset.
+            if manual_motion_switch_ctx is not None:
+                manual_motion_switch_ctx[0]()
             # agent stepping
             actions = policy(obs)
             if args_cli.freeze_policy or timestep < args_cli.zero_act_until:
@@ -393,6 +508,11 @@ def main():
 
     # close the simulator
     env.close()
+
+    #批量播放
+    if manual_motion_switch_ctx is not None:
+        _, input_iface, subscription = manual_motion_switch_ctx
+        input_iface.unsubscribe_from_keyboard_events(subscription)
 
     if args_cli.video:
         subprocess.run(
