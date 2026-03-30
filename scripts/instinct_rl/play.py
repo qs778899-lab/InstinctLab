@@ -34,6 +34,18 @@ parser.add_argument(
     "--no_terminate", action="store_true", default=False, help="Do not remove termination conditions in simulation."
 )
 parser.add_argument(
+    "--motion_file",
+    type=str,
+    default=None,
+    help="Play a specific motion npz file (absolute path or basename). If set, the motion buffer is restricted to this file.",
+)
+parser.add_argument(
+    "--interactive",
+    action="store_true",
+    default=False,
+    help="Enable interactive terminal mode to switch motions (press 'n' for next, 'p' for previous, 'q' to quit interactive).",
+)
+parser.add_argument(
     "--aux_reward",
     action="store_true",
     default=False,
@@ -65,6 +77,9 @@ import numpy as np
 import os
 import time
 import torch
+import threading
+import sys
+import queue
 
 from instinct_rl.runners import OnPolicyRunner
 
@@ -184,6 +199,105 @@ def _print_policy_action_debug(vec_env: InstinctRlVecEnvWrapper, policy, tag: st
     for action_idx, joint_name in enumerate(robot_joint_names):
         print(f"  {action_idx:02d}: {joint_name:30s} {float(action_sample[action_idx]): .6f}")
 
+
+def _setup_terminal_motion_switch(vec_env: InstinctRlVecEnvWrapper):
+    """Set up terminal-based motion switching for single-env play."""
+    base_env = vec_env.unwrapped
+    if base_env.num_envs != 1:
+        print("[WARN] Interactive mode is only supported when num_envs=1.")
+        return None
+
+    motion_reference = base_env.scene["motion_reference"]
+    if len(motion_reference.motion_buffers) != 1:
+        print("[WARN] Manual motion switch supports a single motion buffer only.")
+        return None
+
+    buffer_name = next(iter(motion_reference.motion_buffers.keys()))
+    buffer = motion_reference.motion_buffers[buffer_name]
+
+    # Ensure file list is available
+    if not hasattr(buffer, "_all_motion_files") or len(buffer._all_motion_files) <= 1:
+        try:
+            buffer._refresh_motion_file_list()
+        except Exception:
+            pass
+
+    if not hasattr(buffer, "_all_motion_files") or len(buffer._all_motion_files) <= 1:
+        print("[INFO] Manual motion switch disabled: only one motion file is available.")
+        return None
+
+    total_motions = len(buffer._all_motion_files)
+    env_ids = torch.tensor([0], device=base_env.device, dtype=torch.long)
+    assigned_ids = buffer.env_ids_to_assigned_ids(env_ids).to(buffer.buffer_device)
+
+    input_queue = queue.Queue()
+
+    def terminal_input_thread():
+        print("\n" + "=" * 50)
+        print("[Terminal Interactive Mode Enabled]")
+        print("Commands: 'n' (next motion), 'p' (previous), 's' (show current), 'q' (quit interactive)")
+        print("=" * 50)
+        while True:
+            cmd = sys.stdin.readline().strip().lower()
+            if cmd in ["n", "p", "s", "q"]:
+                input_queue.put(cmd)
+                if cmd == "q":
+                    break
+            else:
+                if cmd:
+                    print(f"Unknown command: {cmd}")
+
+    thread = threading.Thread(target=terminal_input_thread, daemon=True)
+    thread.start()
+
+    def _print_current_motion(tag: str):
+        motion_identifier = motion_reference.get_current_motion_identifiers(env_ids)[0]
+        print(f"[INFO] {tag}: {motion_identifier}")
+
+    def process_terminal_switch():
+        try:
+            cmd = input_queue.get_nowait()
+        except queue.Empty:
+            return
+
+        if cmd == "q":
+            print("[Interactive Mode Disabled]")
+            return "quit"
+
+        if cmd == "s":
+            _print_current_motion("Current motion")
+            return
+
+        delta = 0
+        if cmd == "n":
+            delta = 1
+        elif cmd == "p":
+            delta = -1
+
+        if delta != 0:
+            curr_idx = int(buffer._assigned_env_motion_selection[assigned_ids][0].item())
+            next_idx = (curr_idx + delta) % total_motions
+
+            # Keep the selected trajectory fixed during this reset and only advance by one.
+            original_sampler = buffer._sample_assigned_env_motion_selection
+            try:
+
+                def _keep_motion_selection(_assigned_ids):
+                    return None
+
+                buffer._sample_assigned_env_motion_selection = _keep_motion_selection
+                buffer._assigned_env_motion_selection[assigned_ids] = next_idx
+                if hasattr(buffer, "_motion_buffer_start_time_s"):
+                    buffer._motion_buffer_start_time_s[assigned_ids] = 0.0
+                base_env._reset_idx(torch.tensor([0], device=base_env.device, dtype=torch.long))
+            finally:
+                buffer._sample_assigned_env_motion_selection = original_sampler
+
+            _print_current_motion("Switched to")
+
+    _print_current_motion("Initial motion")
+    return process_terminal_switch
+
 # virtual obstacles
 @hydra_task_config(args_cli.task, "env_cfg_entry_point")
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: InstinctRlOnPolicyRunnerCfg | None = None):
@@ -251,6 +365,47 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     if isinstance(env.unwrapped, DirectMARLEnv):
         env = multi_agent_to_single_agent(env)
 
+    # Optional: restrict to a specific motion file if provided
+    if args_cli.motion_file is not None:
+        base_env = env.unwrapped
+        motion_reference = base_env.scene["motion_reference"]
+        if len(motion_reference.motion_buffers) != 1:
+            print(
+                "[WARN] --motion_file is currently supported only when a single motion buffer is present. Ignored."
+            )
+        else:
+            buffer_name = next(iter(motion_reference.motion_buffers.keys()))
+            buffer = motion_reference.motion_buffers[buffer_name]
+            # Find by absolute path match or basename match
+            target = args_cli.motion_file
+            all_files = getattr(buffer, "_all_motion_files", None)
+            if not all_files:
+                # ensure the list is built
+                try:
+                    buffer._refresh_motion_file_list()  # type: ignore
+                    all_files = buffer._all_motion_files
+                except Exception:
+                    all_files = []
+            target_idx = None
+            import os as _os
+
+            target_base = _os.path.basename(target)
+            for i, f in enumerate(all_files):
+                if f == target or _os.path.basename(f) == target_base:
+                    target_idx = i
+                    break
+            if target_idx is None:
+                print(f"[ERROR] --motion_file not found in buffer list: {target}")
+            else:
+                # Restrict trajectories to this single index
+                import torch as _torch
+
+                try:
+                    buffer.enable_trajectories(_torch.tensor([target_idx], device=buffer.buffer_device))  # type: ignore
+                except Exception:
+                    buffer.enable_trajectories(slice(target_idx, target_idx + 1))
+                print(f"[INFO] Playing specific motion: {all_files[target_idx]}")
+
     # react to custom play arguments
     if args_cli.no_terminate:
         # NOTE: This is only applicable with shadowing task
@@ -294,11 +449,31 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # reset environment
     obs, _ = env.get_observations()
+
+    #批量播放 Always print which motion is currently playing (env 0) for clarity.
+    try:
+        motion_reference = env.unwrapped.scene["motion_reference"]
+        current_motion = motion_reference.get_current_motion_identifiers([0])[0]
+        print(f"[INFO] Current motion (env0): {current_motion}")
+    except Exception:
+        pass
+
+    #批量播放 Setup terminal interactive mode
+    terminal_motion_switch_ctx = None
+    if args_cli.interactive:
+        terminal_motion_switch_ctx = _setup_terminal_motion_switch(env)
+
     timestep = 0
     # simulate environment
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
+            
+            #批量播放 Process terminal motion switch
+            if terminal_motion_switch_ctx is not None:
+                if terminal_motion_switch_ctx() == "quit":
+                    terminal_motion_switch_ctx = None
+
             # agent stepping
             actions = policy(obs)
             if timestep < args_cli.zero_act_until:

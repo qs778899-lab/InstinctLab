@@ -34,6 +34,12 @@ parser.add_argument(
     "--no_terminate", action="store_true", default=False, help="Do not remove termination conditions in simulation."
 )
 parser.add_argument(
+    "--motion_file",
+    type=str,
+    default=None,
+    help="Play a specific motion npz file (absolute path or basename). If set, the motion buffer is restricted to this file.",
+)
+parser.add_argument(
     "--aux_reward",
     action="store_true",
     default=False,
@@ -94,6 +100,18 @@ parser.add_argument(
     action="store_true",
     default=False,
     help="Print observation/action layout debug information.",
+)
+parser.add_argument(
+    "--print_foot_pos",
+    action="store_true",
+    default=False,
+    help="Print foot positions every N motion frames (env0).",
+)
+parser.add_argument(
+    "--print_interval",
+    type=int,
+    default=20,
+    help="Interval in motion frames for printing foot positions.",
 )
 parser.add_argument(
     "--manual_next_motion_key",
@@ -431,6 +449,45 @@ def main():
     if isinstance(env.unwrapped, DirectMARLEnv):
         env = multi_agent_to_single_agent(env)
 
+    # Optional: restrict to a specific motion file if provided
+    if args_cli.motion_file is not None:
+        base_env = env.unwrapped
+        motion_reference = base_env.scene["motion_reference"]
+        if len(motion_reference.motion_buffers) != 1:
+            print(
+                "[WARN] --motion_file is currently supported only when a single motion buffer is present. Ignored."
+            )
+        else:
+            buffer_name = next(iter(motion_reference.motion_buffers.keys()))
+            buffer = motion_reference.motion_buffers[buffer_name]
+            # Find by absolute path match or basename match
+            target = args_cli.motion_file
+            all_files = getattr(buffer, "_all_motion_files", None)
+            if not all_files:
+                # ensure the list is built
+                try:
+                    buffer._refresh_motion_file_list()  # type: ignore
+                    all_files = buffer._all_motion_files
+                except Exception:
+                    all_files = []
+            target_idx = None
+            import os as _os
+            target_base = _os.path.basename(target)
+            for i, f in enumerate(all_files):
+                if f == target or _os.path.basename(f) == target_base:
+                    target_idx = i
+                    break
+            if target_idx is None:
+                print(f"[ERROR] --motion_file not found in buffer list: {target}")
+            else:
+                # Restrict trajectories to this single index
+                import torch as _torch
+                try:
+                    buffer.enable_trajectories(_torch.tensor([target_idx], device=buffer.buffer_device))  # type: ignore
+                except Exception:
+                    buffer.enable_trajectories(slice(target_idx, target_idx + 1))
+                print(f"[INFO] Playing specific motion: {all_files[target_idx]}")
+
     # react to custom play arguments
     if args_cli.no_terminate:
         # NOTE: This is only applicable with shadowing task
@@ -474,7 +531,24 @@ def main():
 
     # reset environment
     obs, _ = env.get_observations()
+    # Always print which motion is currently playing (env 0) for clarity.
+    try:
+        motion_reference = env.unwrapped.scene["motion_reference"]
+        current_motion = motion_reference.get_current_motion_identifiers([0])[0]
+        print(f"[INFO] Current motion (env0): {current_motion}")
+    except Exception:
+        pass
     manual_motion_switch_ctx = _setup_single_env_manual_motion_switch(env) #批量播放
+
+    #print foot
+    # prepare state for foot position printing
+    _last_printed_motion_frame = -1
+    # identify the first (and only) motion buffer name for later use
+    try:
+        _buffer_name_for_print = next(iter(env.unwrapped.scene["motion_reference"].motion_buffers.keys()))
+    except Exception:
+        _buffer_name_for_print = None
+
     timestep = 0
     # simulate environment
     while simulation_app.is_running():
@@ -484,6 +558,35 @@ def main():
             # in-place writes on inference tensors during reset.
             if manual_motion_switch_ctx is not None:
                 manual_motion_switch_ctx[0]()
+
+            #print foot
+            # Optional printing of foot positions by motion frame index
+            if args_cli.print_foot_pos and _buffer_name_for_print is not None:
+                try:
+                    base_env = env.unwrapped
+                    motion_reference = base_env.scene["motion_reference"]
+                    buffer = motion_reference.motion_buffers[_buffer_name_for_print]
+                    # motion frame index based on motion start time + current motion time and framerate
+                    assigned_motion_idx = int(buffer._assigned_env_motion_selection[0].item())
+                    motion_fps = float(buffer._all_motion_sequences.framerate[assigned_motion_idx].item())
+                    motion_start_time_s = float(buffer._motion_buffer_start_time_s[0].item())
+                    motion_time_s = float(motion_reference._timestamp[0].item())
+                    motion_frame_idx = int(round((motion_start_time_s + motion_time_s) * motion_fps))
+                    if motion_frame_idx != _last_printed_motion_frame and motion_frame_idx % int(args_cli.print_interval) == 0:
+                        _last_printed_motion_frame = motion_frame_idx
+                        motion_name = buffer._all_motion_files[assigned_motion_idx].split("/")[-1]
+                        frame = motion_reference.reference_frame
+                        links = motion_reference.cfg.link_of_interests
+                        pos_w = frame.link_pos_w[0, 0]  # [num_links, 3]
+                        print(f"--- Frame {motion_frame_idx} (Motion: {motion_name}) ---")
+                        for i, link_name in enumerate(links):
+                            if ("ankle" in link_name) or ("foot" in link_name):
+                                print(f"Link: {link_name}, Pos: {pos_w[i].detach().cpu().numpy()}")
+                except Exception:
+                    # Be silent if printing state is temporarily unavailable (e.g., just switched/reset)
+                    pass
+            
+            
             # agent stepping
             actions = policy(obs)
             if args_cli.freeze_policy or timestep < args_cli.zero_act_until:

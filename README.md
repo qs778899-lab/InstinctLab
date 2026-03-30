@@ -11,7 +11,7 @@
 
 This repository is the environment side of [Project-Instinct](https://project-instinct.github.io/).
 
-We aim at industralize Reinforcement Learning for Humanoid (legged robots) whole-body control.
+We aim to industrialize Reinforcement Learning for Humanoid (legged robots) whole-body control.
 
 **Key Features:**
 
@@ -105,7 +105,7 @@ pre-commit install
 
 And copy `scripts/instinct_rl` to your own repository.
 
-### Or you are just to stubborn and want to fork and directly modify the code in this repo.
+### Or you are just too stubborn and want to fork and directly modify the code in this repo.
 
 - Please create a new folder in the `source/instinctlab/instinctlab/tasks` directory. The name of the folder should be your project name. Inside the folder, DO add `__init__.py` in each level of the subfolders. (Many people tend to forget this step and could not find the supposely registered tasks.)
 
