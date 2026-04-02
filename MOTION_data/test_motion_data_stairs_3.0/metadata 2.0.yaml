@@ -1,0 +1,9 @@
+motion_files:
+- motion_file: stairs_01_augmented_interp_retargeted.npz
+  terrain_id: 0
+- motion_file: stairs146_augmented_interp_retargeted.npz
+  terrain_id: 0
+
+terrains:
+- terrain_file: stairs_terrain_2.0.stl
+  terrain_id: 0
